@@ -1,6 +1,40 @@
+header{
+    text-align: center;
+}
+
 .top-menu a{
-    background-color: #ccc;
-    color: blue;
+    border-right: 50px;
+    color: black;
+    margin-left: 80px;
     padding: 10px;
+    padding-right: 50px;
+    padding-left: 50px;
     text-decoration: none;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.top-menu a:hover{
+    background-color: #ccc;
+    border-radius: 10px;
+}
+
+.top-menu{
+    padding: 20px;
+}
+
+.main-body{
+    background-color: #DCDCDC;
+}
+
+.about-body{
+    background: #DCDCDC;
+}
+
+.projects-body{
+    background: #DCDCDC;
+}
+
+.contact-body{
+    background: #DCDCDC;
 }
