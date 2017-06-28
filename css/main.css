@@ -1,11 +1,25 @@
-header{
-    text-align: center;
+html, body {
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
-.top-menu a{
+body{
+    overflow-y: hidden
+}
+
+header{
+    text-align: center;
+    margin-top: 35px;
+    margin-bottom: 10px;
+    font-weight: bolder;
+    font-size: 24px;
+    /*1333x200 img*/
+}
+
+#nav-bar a{
     border-right: 50px;
-    color: black;
-    margin-left: 80px;
+    color: #1E90FF;
+    margin-left: 50px;
     padding: 10px;
     padding-right: 50px;
     padding-left: 50px;
@@ -14,27 +28,84 @@ header{
     font-size: 18px;
 }
 
-.top-menu a:hover{
-    background-color: #ccc;
+#nav-bar a:hover{
+    background-color: #264040;
     border-radius: 10px;
 }
 
-.top-menu{
-    padding: 20px;
+#nav-bar{
+    padding: 5px;
+    background-color: #2F4F4F;
+}
+
+#nav-bar ul{
+    padding-left: 105px;
+    list-style-type: none;
+}
+
+#nav-bar li{
+    display: inline-block;
 }
 
 .main-body{
     background-color: #DCDCDC;
 }
 
+.main-body .main-intro{
+    text-align: center;
+    text-transform: uppercase;
+    font-family: fantasy;
+    font-size: 32px;
+    margin-top: 100px;
+}
+
 .about-body{
     background: #DCDCDC;
+}
+
+.about-body p{
+    word-wrap: break-word;
+    width: 80%;
+}
+
+.about-body #AboutPic{
+    margin-top: 25px;
+    margin-left: 25px;
+}
+
+.about-body .about-intro{
+    position: relative;
+    bottom: 190px;
+    left: 200px;
+
 }
 
 .projects-body{
     background: #DCDCDC;
 }
 
+.projects-body a{
+    color: blue;
+}
+
 .contact-body{
     background: #DCDCDC;
+}
+
+.end-refs{
+    margin-top: 15px;
+    position: relative;
+    /*left: 90%;*/
+    top: 15%;
+    text-align: right;
+    background-color: #2F4F4F;
+
+}
+
+.end-refs a{
+    color: #1E90FF;
+}
+
+.end-refs a span{
+    padding: 5px;
 }
