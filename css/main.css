@@ -63,6 +63,9 @@ header{
     background: #DCDCDC;
 }
 
+.about-body a{
+    color: blue;
+}
 .about-body p{
     word-wrap: break-word;
     width: 80%;
