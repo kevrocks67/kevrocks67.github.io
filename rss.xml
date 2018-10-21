@@ -4,173 +4,27 @@
 
 <channel>
 <title>Kevin Diaz Blog RSS Feed</title>
-<description>An RSS feed for my blog about sutff.</description>
+<description>An RSS feed for my blog about stuff.</description>
 <language>en-us</language>
 <link>http://kevrocks67.github.io/rss.xml</link>
 <atom:link href="http://yourwebsite.com/rss.xml" rel="self" type="application/rss+xml" />
 
 <!-- LB -->
 
+
+
 <item>
-<title>adsf</title>
-<guid>kevrocks67.github.ioblog.html#adsf-1</guid>
-<pubDate>Sun, 21 Oct 2018 15:27:34 EDT</pubDate>
+<title>First Entry</title>
+<guid>kevrocks67.github.ioblog.html#first-entry</guid>
+<pubDate>Sun, 21 Oct 2018 15:45:23 EDT</pubDate>
 <description><![CDATA[
 			<p>
-				<++>
+				This is my first blog entry. In this blog I plan to occassionally update it with tutorials on things 
+                I use in my day-to-day life, have learned or practiced in my home lab. I may possibly speak my opinion 
+                on certain topics in technology. 
 			</p>
 ]]></description>
 </item>
-
-
-<item>
-<title>af</title>
-<guid>kevrocks67.github.ioblog.html#af-1</guid>
-<pubDate>Sun, 21 Oct 2018 15:26:31 EDT</pubDate>
-<description><![CDATA[
-			<p>
-				<++>
-			</p>
-]]></description>
-</item>
-
-
-<item>
-<title>afd</title>
-<guid>kevrocks67.github.ioblog.html#afd</guid>
-<pubDate>Sun, 21 Oct 2018 15:24:42 EDT</pubDate>
-<description><![CDATA[
-			<p>
-				<++>
-			</p>
-]]></description>
-</item>
-
-
-<item>
-<title>adsf</title>
-<guid>kevrocks67.github.ioblog.html#adsf</guid>
-<pubDate>Sun, 21 Oct 2018 15:23:38 EDT</pubDate>
-<description><![CDATA[
-			<p>
-				<++>
-			</p>
-]]></description>
-</item>
-
-
-<item>
-<title>tset2</title>
-<guid>kevrocks67.github.ioblog.html#tset2</guid>
-<pubDate>Sun, 21 Oct 2018 15:22:40 EDT</pubDate>
-<description><![CDATA[
-			<p>
-				<++>
-			</p>
-]]></description>
-</item>
-
-
-<item>
-<title>test</title>
-<guid>kevrocks67.github.ioblog.html#test</guid>
-<pubDate>Sun, 21 Oct 2018 15:21:22 EDT</pubDate>
-<description><![CDATA[
-			<p>
-				<++>
-			</p>
-]]></description>
-</item>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<item>
-<title>test 5</title>
-<guid>kevrocks67.github.ioblog.html#test-5</guid>
-<pubDate>Sun, 21 Oct 2018 14:28:36 -0400</pubDate>
-<description><![CDATA[
-			<p>
-				Hopefully thi sis the last test amiright.jpg
-			</p>
-]]></description>
-</item>
-
-
-<item>
-<title>test4</title>
-<guid>kevrocks67.github.ioblog.html#test4</guid>
-<pubDate>Sun, 21 Oct 2018 14:24:45 -0400</pubDate>
-<description><![CDATA[
-			<p>
-			    This is the finalized system for creating new blog posts on my website. This is
-                amazing. 
-			</p>
-]]></description>
-</item>
-
-
-<item>
-<title>test2</title>
-<guid>kevrocks67.github.ioblog.html#test2</guid>
-<pubDate>Sun, 21 Oct 2018 14:19:06 -0400</pubDate>
-<description><![CDATA[
-
-            This is a test of the system
-]]></description>
-</item>
-
-
-<item>
-<title>test2</title>
-<guid>kevrocks67.github.ioblog.html#test2</guid>
-<pubDate>Sun, 21 Oct 2018 14:16:36 -0400</pubDate>
-<description><![CDATA[
-test of the shit
-]]></description>
-</item>
-
-
-<item>
-<title>test2</title>
-<guid>kevrocks67.github.ioblog.html#test2</guid>
-<pubDate>Sun, 21 Oct 2018 14:13:32 -0400</pubDate>
-<description><![CDATA[
-test of the shits
-]]></description>
-</item>
-
-
-<item>
-<title>test2</title>
-<guid>kevrocks67.github.ioblog.html#test2</guid>
-<pubDate>Sun, 21 Oct 2018 14:10:50 -0400</pubDate>
-<description><![CDATA[
-Some test of the lb system soon to be the better lb system
-]]></description>
-</item>
-
-
-<item>
-<title>another one</title>
-<guid>kevrocks67.github.ioblog.html#another-one</guid>
-<pubDate>Sun, 21 Oct 2018 01:01:55 -0400</pubDate>
-<description><![CDATA[
-ANothter est of the system
-]]></description>
-</item>
-
-
 </channel>
 </rss>
 
