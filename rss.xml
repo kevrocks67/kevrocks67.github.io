@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/css" href="rss.css" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+
+<channel>
+<title>Kevin Diaz Blog RSS Feed</title>
+<description>An RSS feed for my blog about stuff.</description>
+<language>en-us</language>
+<link>http://kevrocks67.github.io/rss.xml</link>
+<atom:link href="http://yourwebsite.com/rss.xml" rel="self" type="application/rss+xml" />
+
+<!-- LB -->
+
+<item>
+<title>Using Projectors with i3wm</title>
+<guid>kevrocks67.github.ioblog.html#using-projectors-with-i3wm</guid>
+<pubDate>Mon, 22 Oct 2018 13:52:01 EDT</pubDate>
+<description><![CDATA[
+			<p>
+				I use arch linux with i3-gaps on an old w520 I saved from being recycled. This computer and
+                environment has truly helped me increase my efficiency. The downside, is that everything has 
+                to be manually configured. I do not mind this at all, however, because it has helped me 
+                understand how computers do certain things. If you were to just plug in the vga cord on a
+                computer running i3wm, nothing would happen. You would then run xrandr to see if the vga
+                connection even shows up and you will realize it has not. This is because there is no 
+                program running in the background to detect these display changes. You have to manually
+                start the VGA output in xrandr. So, you run 
+                
+                <code>xrandr --output VGA-1 --mode 1024x768</code>
+
+                and find that now it works, but it looks really wierd. You try scaling the display and 
+                shifting it but find no success. Why is this?
+			</p>
+            <p>
+                If we take a look at a windows computer, or even one running an actual DE like gnome,
+                we can see that the screen resolution for both the output screen and the laptop
+                display both change. In fact they set themselves to the same resolution as one another
+                This seems like a simple idea, but unless you are actually
+                paying attention when you plug in a vga cable, you do not really notice it. What
+                I ended up doing to solve this problem was writing 2 small scripts. One I run when
+                I plug in a vga output and another when I remove the vga output.
+
+                To activate it, I use <code>xrandr --output LVDS-1-1 --mode 1024x768 --output VGA-0 --mode 1024x768</code>.
+                To disable it, I use <code>xrandr --output LVDS-1-1 --mode 1920x1080 --output VGA-0 --off</code>.
+
+                One thing I did notice is that the script for turning on the vga output will not work
+                until you run xrandr on its own. It may have something with letting xrandr try and 
+                detect the new connection.
+                There is probably a method to automate this process, but until I figure it out,
+                this is what I will do. I only use vga occasionally to test projector and smartboard 
+                functionality after a repair.
+            </p>
+]]></description>
+</item>
+
+
+
+
+<item>
+<title>First Entry</title>
+<guid>kevrocks67.github.ioblog.html#first-entry</guid>
+<pubDate>Sun, 21 Oct 2018 15:45:23 EDT</pubDate>
+<description><![CDATA[
+			<p>
+				This is my first blog entry. In this blog I plan to occassionally update it with tutorials on things 
+                I use in my day-to-day life, have learned or practiced in my home lab. I may possibly speak my opinion 
+                on certain topics in technology. 
+			</p>
+]]></description>
+</item>
+</channel>
+</rss>
+
