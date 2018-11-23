@@ -12,6 +12,52 @@
 <!-- LB -->
 
 <item>
+<title>Detecting The Effect Of A Phishing Attack On Your G Suite Domain</title>
+<guid>kevrocks67.github.ioblog.html#detecting-the-effect-of-a-phishing-attack-on-your-gsuite-domain</guid>
+<pubDate>Thu, 22 Nov 2018 19:43:14 EST</pubDate>
+<description><![CDATA[
+			<p>
+				One of the things we have to be weary of as administrators is security. Phishing attacks are constantly becoming harder to detect and defend against. Other times, it is quite
+                easy to detect. In this post I will tell you what to do when you detect a phishing attack on your domain and how to mitigate.
+			</p>
+            <p>
+                Recently our domain received a phishing attack which told users that they had a new voicemail from someone and to click on a link to view it. When clicked, you were redirected to
+                an outlook login page with your email address already entered in the username field. None of the IT department received the email, but a lot of employees did. We received a question 
+                about it from one employee and did not think much of it. I simply recommended that they not open it as I thought it was an isolated incident. I now realize that I should have done 
+                more in response. No less than an hour later, I received two more questions about the same email. Luckily, those two employees realized it looked sketchy and did not click on the
+                link.
+                I instantly knew that this was a phishing attack on the domain. All of the emails had 
+                the same sender, but slightly different subject lines so I knew that the sender was the constant I needed to use to run my audit.
+            </p>
+            <p>
+                To run my audit, these are the steps I took:
+                <ol>
+                <li>Log in to G Suite dashboard</li>
+                <li>Go to "Reports" tab</li>
+                <li>Scroll down to the audit section on the sidebar and select "Email Log Search"</li>
+                <li>Enter your desired search parameters, in this case the senders email address</li>
+                <li>Select an appropriate time frame to check. I checked the last 7 days since it was recent</li>
+                <li>Save the results as a google sheets file in the upper right corner and share it with your team</li>
+                </ol>
+
+                Now that we have the logs, we can start mitigating the problem. The first thing I did was to cut the head off the snake by setting a global block on the email address in the
+                G Suite admin console. Afterwards, I prepared an email advising all employees of the situation, what to look for, what happens when you click on the link, and what to do if they 
+                have received the email. Using the logs, I was able to also individually verify with those affected if they had clicked on the link and then reset their passwords. Lastly, I was 
+                able to detect the time and date of incident which was actually the night before. I was not alerted to it until the next evening so it is possible that multiple people clicked on the
+                link.
+            </p>
+            <h3>Takeaways</h3>
+            <p>
+                There is not a lot we can do about these attacks except deal with them after they occur. A password compromise of a super admin account via a phishing attack could be devastating
+                for your domain as the attacker will have complete control over everything. This is also one of the reasons you should educate your users and administrators on the dangers of such
+                attacks and how to detect them. Next time, I will be sure to run an audit as soon as I see the first message since it is so easy and quick to do. It will help me reduce the number
+                of people clicking on such emails. I will also look into some possible defensive cyber education for users.
+            </p>
+]]></description>
+</item>
+
+
+<item>
 <title>Using Projectors with i3wm</title>
 <guid>kevrocks67.github.ioblog.html#using-projectors-with-i3wm</guid>
 <pubDate>Mon, 22 Oct 2018 13:52:01 EDT</pubDate>
