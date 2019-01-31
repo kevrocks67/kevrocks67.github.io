@@ -13,7 +13,7 @@
 
 <item>
 <title>Running VMware Images in QEMU</title>
-<guid>kevrocks67.github.ioblog.html#running-vmware-images-in-qemu</guid>
+<guid>kevrocks67.github.io/blog.html#running-vmware-images-in-qemu</guid>
 <pubDate>Wed, 30 Jan 2019 18:30:43 EST</pubDate>
 <description><![CDATA[
 			<p>
@@ -73,7 +73,7 @@
 
 <item>
 <title>Detecting The Effect Of A Phishing Attack On Your G Suite Domain</title>
-<guid>kevrocks67.github.ioblog.html#detecting-the-effect-of-a-phishing-attack-on-your-gsuite-domain</guid>
+<guid>kevrocks67.github.io/blog.html#detecting-the-effect-of-a-phishing-attack-on-your-gsuite-domain</guid>
 <pubDate>Thu, 22 Nov 2018 19:43:14 EST</pubDate>
 <description><![CDATA[
 			<p>
@@ -82,11 +82,11 @@
 			</p>
             <p>
                 Recently our domain received a phishing attack which told users that they had a new voicemail from someone and to click on a link to view it. When clicked, you were redirected to
-                an outlook login page with your email address already entered in the username field. None of the IT department received the email, but a lot of employees did. We received a question 
-                about it from one employee and did not think much of it. I simply recommended that they not open it as I thought it was an isolated incident. I now realize that I should have done 
+                an outlook login page with your email address already entered in the username field. None of the IT department received the email, but a lot of employees did. We received a question
+                about it from one employee and did not think much of it. I simply recommended that they not open it as I thought it was an isolated incident. I now realize that I should have done
                 more in response. No less than an hour later, I received two more questions about the same email. Luckily, those two employees realized it looked sketchy and did not click on the
                 link.
-                I instantly knew that this was a phishing attack on the domain. All of the emails had 
+                I instantly knew that this was a phishing attack on the domain. All of the emails had
                 the same sender, but slightly different subject lines so I knew that the sender was the constant I needed to use to run my audit.
             </p>
             <p>
@@ -101,8 +101,8 @@
                 </ol>
 
                 Now that we have the logs, we can start mitigating the problem. The first thing I did was to cut the head off the snake by setting a global block on the email address in the
-                G Suite admin console. Afterwards, I prepared an email advising all employees of the situation, what to look for, what happens when you click on the link, and what to do if they 
-                have received the email. Using the logs, I was able to also individually verify with those affected if they had clicked on the link and then reset their passwords. Lastly, I was 
+                G Suite admin console. Afterwards, I prepared an email advising all employees of the situation, what to look for, what happens when you click on the link, and what to do if they
+                have received the email. Using the logs, I was able to also individually verify with those affected if they had clicked on the link and then reset their passwords. Lastly, I was
                 able to detect the time and date of incident which was actually the night before. I was not alerted to it until the next evening so it is possible that multiple people clicked on the
                 link.
             </p>
@@ -119,22 +119,22 @@
 
 <item>
 <title>Using Projectors with i3wm</title>
-<guid>kevrocks67.github.ioblog.html#using-projectors-with-i3wm</guid>
+<guid>kevrocks67.github.io/blog.html#using-projectors-with-i3wm</guid>
 <pubDate>Mon, 22 Oct 2018 13:52:01 EDT</pubDate>
 <description><![CDATA[
 			<p>
 				I use arch linux with i3-gaps on an old w520 I saved from being recycled. This computer and
-                environment has truly helped me increase my efficiency. The downside, is that everything has 
-                to be manually configured. I do not mind this at all, however, because it has helped me 
+                environment has truly helped me increase my efficiency. The downside, is that everything has
+                to be manually configured. I do not mind this at all, however, because it has helped me
                 understand how computers do certain things. If you were to just plug in the vga cord on a
                 computer running i3wm, nothing would happen. You would then run xrandr to see if the vga
-                connection even shows up and you will realize it has not. This is because there is no 
+                connection even shows up and you will realize it has not. This is because there is no
                 program running in the background to detect these display changes. You have to manually
-                start the VGA output in xrandr. So, you run 
-                
+                start the VGA output in xrandr. So, you run
+
                 <code>xrandr --output VGA-1 --mode 1024x768</code>
 
-                and find that now it works, but it looks really wierd. You try scaling the display and 
+                and find that now it works, but it looks really wierd. You try scaling the display and
                 shifting it but find no success. Why is this?
 			</p>
             <p>
@@ -150,10 +150,10 @@
                 To disable it, I use <code>xrandr --output LVDS-1-1 --mode 1920x1080 --output VGA-0 --off</code>.
 
                 One thing I did notice is that the script for turning on the vga output will not work
-                until you run xrandr on its own. It may have something with letting xrandr try and 
+                until you run xrandr on its own. It may have something with letting xrandr try and
                 detect the new connection.
                 There is probably a method to automate this process, but until I figure it out,
-                this is what I will do. I only use vga occasionally to test projector and smartboard 
+                this is what I will do. I only use vga occasionally to test projector and smartboard
                 functionality after a repair.
             </p>
 ]]></description>
@@ -164,13 +164,13 @@
 
 <item>
 <title>First Entry</title>
-<guid>kevrocks67.github.ioblog.html#first-entry</guid>
+<guid>kevrocks67.github.io/blog.html#first-entry</guid>
 <pubDate>Sun, 21 Oct 2018 15:45:23 EDT</pubDate>
 <description><![CDATA[
 			<p>
-				This is my first blog entry. In this blog I plan to occassionally update it with tutorials on things 
-                I use in my day-to-day life, have learned or practiced in my home lab. I may possibly speak my opinion 
-                on certain topics in technology. 
+				This is my first blog entry. In this blog I plan to occassionally update it with tutorials on things
+                I use in my day-to-day life, have learned or practiced in my home lab. I may possibly speak my opinion
+                on certain topics in technology.
 			</p>
 ]]></description>
 </item>
