@@ -84,11 +84,18 @@ header{
     margin-left: 25px;
 }
 
+.about-body .skills{
+}
+
 .about-body .about-intro{
     position: relative;
-    bottom: 190px;
-    left: 200px;
+    left: 25px;
+    top: 10px;
+    margin-bottom: 25px;
+}
 
+.about-body .about-intro ul{
+    list-style: none;
 }
 
 .projects-body{
