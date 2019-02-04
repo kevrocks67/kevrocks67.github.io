@@ -4,6 +4,7 @@
     <meta charset="utf-8"/>
     <title>About Me | Kevin's Website</title>
     <meta name="description" content="A personal website to show the life of Kevin Diaz">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" type="text/css" href="css/main.css">
   </head>
 
@@ -11,16 +12,16 @@
     <h1>About Me</h1>
   </header>
 
-  <nav id="nav-bar">
-    <ul>
-      <li><a href="index.html">Home</a></li>
-      <li><a href="about.html">About Me</a></li>
-      <li><a href="src/Resume.pdf" target="_blank">Resume</a></li>
-      <li><a href="projects.html">Projects</a></li>
-      <li><a href="contact.html">Contact Me</a></li>
-      <li><a href="blog.html">Blog</a></li>
-    </ul>
-  </nav>
+  <div class="topnav" id="myTopnav">
+      <a href="index.html">Home</a>
+      <a href="about.html">About Me</a>
+      <a href="src/Resume.pdf" target="_blank">Resume</a>
+      <a href="projects.html">Projects</a>
+      <a href="contact.html">Contact Me</a>
+      <a href="blog.html">Blog</a>
+      <a href="javascript:void(0);" class="icon" onclick="toggleNav()">
+      <i class="fa fa-bars"></i></a>
+  </div>
 
   <body class=about-body>
     <img id=AboutPic src="src/AboutPic.jpg" alt="A picture of me in 2016" align="left" height="200" width="150">
@@ -74,5 +75,6 @@
       <a href="#top"><span style="display: block;">Back To Top</span></a>
       <a href="index.html"><span style="display: block;">Back To Main Page</span></a>
     </div>
+    <script src="js/index.js"></script>
   </body>
 </html>

@@ -4,6 +4,8 @@
     <meta charset="utf-8">
     <title>Kevin's Website</title>
     <meta name="description" content="A personal website to show the life of Kevin Diaz">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" type="text/css" href="css/main.css">
   </head>
 
@@ -11,40 +13,41 @@
     <h1>Kevin Diaz</h1>
   </header>
 
-  <nav id="nav-bar">
-    <ul>
-      <li><a href="index.html">Home</a></li>
-      <li><a href="about.html">About Me</a></li>
-      <li><a href="src/Resume.pdf" target="_blank">Resume</a></li>
-      <li><a href="projects.html">Projects</a></li>
-      <li><a href="contact.html">Contact Me</a></li>
-      <li><a href="blog.html">Blog</a></li>
-    </ul>
-  </nav>
+  <div class="topnav" id="myTopnav">
+      <a href="index.html">Home</a>
+      <a href="about.html">About Me</a>
+      <a href="src/Resume.pdf" target="_blank">Resume</a>
+      <a href="projects.html">Projects</a>
+      <a href="contact.html">Contact Me</a>
+      <a href="blog.html">Blog</a>
+      <a href="javascript:void(0);" class="icon" onclick="toggleNav()">
+      <i class="fa fa-bars"></i></a>
+  </div>
 
   <body class=main-body>
   	<div class="summary">
-		<p> Every day of my life, I strive to learn something new. Whether its reading from a C++ textbook or 
-		reading someone's autobiography, listening to podcasts about leadership, watching a youtube video or 
+		<p> Every day of my life, I strive to learn something new. Whether its reading from a C++ textbook or
+		reading someone's autobiography, listening to podcasts about leadership, watching a youtube video or
 		watching an online lecture, or even just taking on a war game/CTF, I am always learning. I work on
 		projects outside of school and work which help me organize aspects of my life or that I simply think are
 		cool. This is where most of my skills are obtained.
 		</p>
-		<p> Currently, I provide IT services to the Columbia Secondary School. My ultimate goal is to end up in 
-		an information security role. Over time I hope to figure out the specific niche in the infosec world I 
+		<p> Currently, I provide IT services to the Columbia Secondary School. My ultimate goal is to end up in
+		an information security role. Over time I hope to figure out the specific niche in the infosec world I
 		would like to work in. One thing is for sure, when I get there I will be ready to face the challenges and continue learning.
 		</p>
 	 </div>
-		  
+
 	 <div class="main-intro">
        <p>Hi, I am Kevin Diaz</p>
        <p>This is my personal website</p>
        <p>All source code is available on <a href="https://github.com/kevrocks67" target="_blank">github</a></p>
      </div>
-     
-	 
+
+
      <div class="end-refs" style="padding: 15px; position: relative; top: 10px;">
         <a href="#top">Back to top</a>
      </div>
+     <script src="js/index.js"></script>
   </body>
 </html>
