@@ -1,10 +1,10 @@
 <html>
 <head>
 <title>Detecting The Effect Of A Phishing Attack On Your G Suite Domain</title>
-<link rel='stylesheet' type='text/css' href='../blog.css'>
+<link rel='stylesheet' type='text/css' href='../css/blog.css'>
 <meta charset='utf-8'/>
 </head>
-<body>			<h1 id='detecting-the-effect-of-a-phishing-attack-on-your-gsuite-domain'><a href="../blog/detecting-the-effect-of-a-phishing-attack-on-your-gsuite-domain.html">Detecting The Effect Of A Phishing Attack On Your G Suite Domain</a></h1>
+<body id="indiv">			<h1 id='detecting-the-effect-of-a-phishing-attack-on-your-gsuite-domain'><a href="../blog/detecting-the-effect-of-a-phishing-attack-on-your-gsuite-domain.html">Detecting The Effect Of A Phishing Attack On Your G Suite Domain</a></h1>
 			<small>[<a href="../blog.html#detecting-the-effect-of-a-phishing-attack-on-your-gsuite-domain">link</a>&mdash;<a href="../blog/detecting-the-effect-of-a-phishing-attack-on-your-gsuite-domain.html">standalone</a>]</small>
 
 			<p>
@@ -13,11 +13,11 @@
 			</p>
             <p>
                 Recently our domain received a phishing attack which told users that they had a new voicemail from someone and to click on a link to view it. When clicked, you were redirected to
-                an outlook login page with your email address already entered in the username field. None of the IT department received the email, but a lot of employees did. We received a question 
-                about it from one employee and did not think much of it. I simply recommended that they not open it as I thought it was an isolated incident. I now realize that I should have done 
+                an outlook login page with your email address already entered in the username field. None of the IT department received the email, but a lot of employees did. We received a question
+                about it from one employee and did not think much of it. I simply recommended that they not open it as I thought it was an isolated incident. I now realize that I should have done
                 more in response. No less than an hour later, I received two more questions about the same email. Luckily, those two employees realized it looked sketchy and did not click on the
                 link.
-                I instantly knew that this was a phishing attack on the domain. All of the emails had 
+                I instantly knew that this was a phishing attack on the domain. All of the emails had
                 the same sender, but slightly different subject lines so I knew that the sender was the constant I needed to use to run my audit.
             </p>
             <p>
@@ -32,8 +32,8 @@
                 </ol>
 
                 Now that we have the logs, we can start mitigating the problem. The first thing I did was to cut the head off the snake by setting a global block on the email address in the
-                G Suite admin console. Afterwards, I prepared an email advising all employees of the situation, what to look for, what happens when you click on the link, and what to do if they 
-                have received the email. Using the logs, I was able to also individually verify with those affected if they had clicked on the link and then reset their passwords. Lastly, I was 
+                G Suite admin console. Afterwards, I prepared an email advising all employees of the situation, what to look for, what happens when you click on the link, and what to do if they
+                have received the email. Using the logs, I was able to also individually verify with those affected if they had clicked on the link and then reset their passwords. Lastly, I was
                 able to detect the time and date of incident which was actually the night before. I was not alerted to it until the next evening so it is possible that multiple people clicked on the
                 link.
             </p>

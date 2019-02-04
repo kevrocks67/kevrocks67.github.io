@@ -4,10 +4,10 @@
 
 <channel>
 <title>Kevin Diaz Blog RSS Feed</title>
-<description>An RSS feed for my blog about stuff.</description>
+<description>An RSS feed for my blog about tech.</description>
 <language>en-us</language>
 <link>http://kevrocks67.github.io/rss.xml</link>
-<atom:link href="http://yourwebsite.com/rss.xml" rel="self" type="application/rss+xml" />
+<atom:link href="kevrocks67.github.io/rss.xml" rel="self" type="application/rss+xml" />
 
 <!-- LB -->
 

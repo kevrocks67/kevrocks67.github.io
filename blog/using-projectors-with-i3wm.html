@@ -1,25 +1,25 @@
 <html>
 <head>
 <title>Using Projectors with i3wm</title>
-<link rel='stylesheet' type='text/css' href='../blog.css'>
+<link rel='stylesheet' type='text/css' href='../css/blog.css'>
 <meta charset='utf-8'/>
 </head>
-<body>			<h1 id='using-projectors-with-i3wm'><a href="../blog/using-projectors-with-i3wm.html">Using Projectors with i3wm</a></h1>
+<body id="indiv">			<h1 id='using-projectors-with-i3wm'><a href="../blog/using-projectors-with-i3wm.html">Using Projectors with i3wm</a></h1>
 			<small>[<a href="../blog.html#using-projectors-with-i3wm">link</a>&mdash;<a href="../blog/using-projectors-with-i3wm.html">standalone</a>]</small>
 
 			<p>
 				I use arch linux with i3-gaps on an old w520 I saved from being recycled. This computer and
-                environment has truly helped me increase my efficiency. The downside, is that everything has 
-                to be manually configured. I do not mind this at all, however, because it has helped me 
+                environment has truly helped me increase my efficiency. The downside, is that everything has
+                to be manually configured. I do not mind this at all, however, because it has helped me
                 understand how computers do certain things. If you were to just plug in the vga cord on a
                 computer running i3wm, nothing would happen. You would then run xrandr to see if the vga
-                connection even shows up and you will realize it has not. This is because there is no 
+                connection even shows up and you will realize it has not. This is because there is no
                 program running in the background to detect these display changes. You have to manually
-                start the VGA output in xrandr. So, you run 
-                
+                start the VGA output in xrandr. So, you run
+
                 <code>xrandr --output VGA-1 --mode 1024x768</code>
 
-                and find that now it works, but it looks really wierd. You try scaling the display and 
+                and find that now it works, but it looks really wierd. You try scaling the display and
                 shifting it but find no success. Why is this?
 			</p>
             <p>
@@ -35,10 +35,10 @@
                 To disable it, I use <code>xrandr --output LVDS-1-1 --mode 1920x1080 --output VGA-0 --off</code>.
 
                 One thing I did notice is that the script for turning on the vga output will not work
-                until you run xrandr on its own. It may have something with letting xrandr try and 
+                until you run xrandr on its own. It may have something with letting xrandr try and
                 detect the new connection.
                 There is probably a method to automate this process, but until I figure it out,
-                this is what I will do. I only use vga occasionally to test projector and smartboard 
+                this is what I will do. I only use vga occasionally to test projector and smartboard
                 functionality after a repair.
             </p>
 </body>
