@@ -47,7 +47,7 @@
         Here are the actual steps:
         <ol>
           <li>tar -xvf original.ova</li>
-          <li>qemu-img -O convert qcow2 original.vmdk original.qcow2</li>
+          <li>qemu-img convert -O qcow2 original.vmdk original.qcow2</li>
           <li>Run the qcow2 image in QEMU</li>
           <li>If it does not boot, try the other vmdk file if there is one</li>
         </ol>
