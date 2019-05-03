@@ -12,6 +12,172 @@
 <!-- LB -->
 
 <item>
+<title>QEMU Host Only Networking</title>
+<guid>kevrocks67.github.ioblog.html#qemu-host-only-networking.html</guid>
+<pubDate>Fri, 03 May 2019 16:22:01 -0400</pubDate>
+<description><![CDATA[
+<p>
+Often times, it is useful to use a host-only network in a lab environment, especially when
+dealing with certain security labs. What a host-only network allows is for your virtual machines
+to communicate with each other on their own independent network and communicate to the host
+computer/hypervisor. However, the VM's will not be able to reach out to other devices on your
+network and devices on your network will not be able to reach them. In order to set up this
+isolated environment, you need to create a bridge and tap just like any other VM networking set
+up. There are two methods to do this, one is manually and the other automatically using the
+libvirt XML format.
+</p>
+
+<h3>Libvirt XML Method</h3>
+<p>
+In order to do this the easy way, you can create an XML file whose contents are the below.
+This is simply the default network setup but without the forward tags. This makes it so the
+network is limited to the virtual environment. I renamed the bridge to "virbr1" instead of the
+default "virbr0" so there is no conflict. I also changed the last byte of the mac address and set
+an appropriate DHCP range and IP address as to not interfere with the other network. Here I simply
+changed the IP from the 192.168.122.0/24 subnet to 192.168.123.0/24. In the DHCP range, do not
+forget to leave out the .255 address since this IP is used for broadcast.
+Finally, I changed the name to secnet to help me identify it. I called it
+that because this is the network I use for security labs, often with vulnerable
+systems, which I want no where near my real network.
+</p>
+<pre>
+    &lt;network&gt;
+      &lt;name&gt;secnet&lt;/name&gt;
+      &lt;uuid&gt;8f49de66-0947-4271-85a4-2bbe88913555&lt;/uuid&gt;
+      &lt;bridge name='virbr1' stp='on' delay='0'/&gt;
+      &lt;mac address='52:54:00:95:26:26'/&gt;
+      &lt;ip address='192.168.123.1' netmask='255.255.255.0'&gt;
+        &lt;dhcp&gt;
+          &lt;range start='192.168.123.30' end='192.168.123.254'/&gt;
+        &lt;/dhcp&gt;
+      &lt;/ip&gt;
+    &lt;/network&gt;
+</pre>
+
+After creating this file, simply run <i>virsh net-define file_name.xml</i> and <i>virsh net-start
+file_name</i>. If all is well you have officially set up the network and can configure the client.
+You can do this either through virt-manager by changing the NIC settings from the default
+networks bridge to your bridge, in this case, virbr1, or you can do <i>virsh edit domain</i> and
+look for a line with &lt;interface type='bridge'&gt; and modify the value for source. If you
+have no NIC set up at all, add the following lines to your code, modifying certain values such
+as the mac address and pci slot under the address tag as necessary. When you boot up the client
+it should automatically get a DHCP address.
+
+<pre>
+    &lt;interface type='bridge'&gt;
+      &lt;mac address='52:54:00:8c:d0:7e'/&gt;
+      &lt;source bridge='virbr1'/&gt;
+      &lt;model type='virtio'/&gt;
+      &lt;address type='pci' domain='0x0000' bus='0x00' slot='0x08' function='0x0'/&gt;
+    &lt;/interface&gt;
+</pre>
+</P>
+
+<h3>Manual Method</h3>
+ <p>
+Although you can do the above method and have it work well, there are times when you want to
+learn what actually happens behind the scenes and how it all works. In order to do this, you have
+to understand that the virtual network is made up of a bridge and a tap where the tap acts as a
+virtual NIC for the VM. The bridge is what hosts the network and acts as a router. We need to
+create this bridge, assign it an IP, then create the tap and make the bridge a slave of the tap.
+At this point, a functioning network will be established with static IP addresses. If you want
+DHCP, you can do so using dnsmasq. Finally, add the appropriate settings to the VM as described
+above in the XML method. From there on out, everything else is simply a matter of
+configuring the client itself. The only negative to this manual method is that you have to start
+and stop the network manually, but this is easily scriptable.
+</p>
+
+<pre>
+    # Create the virtual bridge and name it secnet and bring the interface up
+    sudo ip link add secnet type bridge; sudo ip link set secnet up
+
+    # Create the tap and name it secnet-nic (you can call it whatever you want)
+    sudo ip tuntap add dev secnet-nic mode tap
+
+    # Bring up the interface in promiscuous mode
+    sudo ip link set secnet-nic up promisc on
+
+    # Make secnet-nic a slave of secnet
+    sudo ip link set secnet-nic master secnet
+
+    # Give bridge secnet an IP address of 192.168.123.1
+    sudo ip addr add 192.168.123.1/24 broadcast 192.168.123.255 dev secnet
+</pre>
+
+<b>DHCP With dnsmasq</b>
+<p>
+Setting up DHCP with dnsmasq is simple. You can either write out the config within the command,
+as is shown below, or you can create a config file which you can read from, also shown below.
+The important steps in running dnsmasq are setting the correct interface and DHCP range as well
+as setting the -p option to 0. When the -p option is set to 0, the DNS function of dnsmasq will
+no longer start which removes conflicts with any active DNS servers on your host computer. I
+have this problem since I use dnscrypt on my laptop, however, you may not encounter such
+conflict. There is no real need to host our own DNS server so nothing is lost by doing this.
+<br>
+<b>Note:</b> The secnet config provided below was generated by libvirt when using the XML method
+taught in this blog.
+
+<pre>
+    sudo dnsmasq --interface secnet -p 0 --bind-interfaces --dhcp-range=192.168.123.10,192.168.123.254
+
+    or
+
+    sudo dnsmasq --conf-file=/var/lib/libvirt/dnsmasq/secnet.conf --leasefile-ro
+
+    # secnet.conf
+    strict-order
+    pid-file=test.pid
+    except-interface=lo
+    bind-dynamic
+    interface=secnet
+    dhcp-option=3
+    no-resolv
+    ra-param=*,0,0
+    dhcp-range=192.168.123.30,192.168.123.254,255.255.255.0
+    dhcp-no-override
+    dhcp-authoritative
+    dhcp-lease-max=225
+    dhcp-hostsfile=test.hostsfile
+    addn-hosts=/var/lib/libvirt/dnsmasq/default.addnhosts
+</pre>
+</p>
+
+<p>
+If you did not set up DHCP using dnsmasq you will have to manually set up the IP
+and default gateway route on the client. It is simply two lines if you use the command line
+and a few changes within the settings panel of whatever desktop environment you're using in the
+vm.
+</p>
+
+<pre>
+    # Assign an ip address to the interface
+    ip addr add 192.168.123.2/24 dev eth0
+
+    # Add the default gateway route which is the secnet address
+    route add default gw 192.168.123.1 eth0
+
+    # Test network connectivity
+    ping 1.1.1.1
+
+    # There is no DNS assigned so you have to manually add a server in resolv.conf
+    echo 1.1.1.1 > /etc/resolv.conf
+
+    # Final network connectivity test with DNS resolution
+    ping google.com
+</pre>
+</p>
+
+<p>
+If you followed all the steps in this guide, you will have successfully created an isolated
+host-only network. To confirm this, try pinging a device in your network such as your phone.
+This should not work, but you should be able to ping the host computer at 192.168.123.1 and
+other VM's on the same network.
+</p>
+]]></description>
+</item>
+
+
+<item>
 <title>Running VMware Images in QEMU</title>
 <guid>kevrocks67.github.io/blog.html#running-vmware-images-in-qemu</guid>
 <pubDate>Wed, 30 Jan 2019 18:30:43 EST</pubDate>
