@@ -1,0 +1,55 @@
+<html>
+<head>
+<title>QEMU Port Forwarding Using Iptables</title>
+<link rel='stylesheet' type='text/css'
+    href='../css/blog.css'>
+<meta charset='utf-8'/>
+</head>
+<body id='indiv'>
+<h1>QEMU Port Forwarding Using Iptables</h1>
+<small>[<a href='../blog.html#qemu-port-forwarding-using-iptables'>link</a>&mdash;<a href='qemu-port-forwarding-using-iptables.html'>standalone</a>]</small>
+<p>
+Normally, there is no website when I go to my debian server's IP address in my browser. However,
+I have a web server running in a QEMU VM on that server and would like to access it from my
+laptop. After following the steps in this guide, I am able to access that web server by going to
+the IP of my debian server as if it was installed on the server itself. Unless you give the VM
+its own real IP address from the router, we cannot access that VM from another computer. That
+being said we may not want to give the VM its own TAP and IP address. The alternative is to
+forward all requests to the host computer on a specific port to the port on the VM for the
+service you want to access. I used iptables to do this port forwarding just like we do port
+forwarding on our home routers. Our routers use NAT to do port forwarding allowing us to access
+services in our homes from across the internet. We can replicate this in our VM's
+with the below iptables rules.
+</p>
+
+<b>NOTE:</b>In the case described below, 192.168.1.250 is the IP address of the debian server
+and 192.168.122.215 is the ip address of the VM. Both of these devices are on a /24 subnet.
+The interface on which the debian server connects to my home network is enp2s0.
+
+<br>
+<br>
+
+First we enable this NAT functionality by setting the MASQUERADE option.
+
+<pre>sudo iptables -t nat -A POSTROUTING -j MASQUERADE</pre>
+
+Then, we set a PREROUTING rule which lets the host device detect any incoming connections on port
+80 for our network interface and redirect it to the VM's IP address on port 80 instead of
+attempting to connect to the hosts own port 80.
+
+<pre>
+sudo iptables -t nat -A PREROUTING -d 192.168.1.250/24 -i enp2s0 -p tcp --dport 80 -j DNAT \
+--to-destination 192.168.122.215:80
+</pre>
+
+Finally, we set a FORWARD rule which ensures the packet actually gets sent to port 80 on the VM and
+that the VM is open to accepting that packet.
+
+<pre>
+sudo iptables -I FORWARD -p tcp -d 192.168.122.215/24 --dport 80 -m state --state \
+NEW,RELATED,ESTABLISHED -j ACCEPT
+</pre>
+<footer>by <strong><a href='kevrocks67.github.io'>Kevin Diaz</a></strong></footer>
+</body>
+
+</html>
