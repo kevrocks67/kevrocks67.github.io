@@ -1,0 +1,257 @@
+<html>
+<head>
+<title>Powershell Remote Management From Linux</title>
+<link rel='stylesheet' type='text/css'
+    href='../css/blog.css'>
+<meta charset='utf-8'/>
+</head>
+<body id='indiv'>
+<h1>Powershell Remote Management From Linux</h1>
+<small>[<a href='../blog.html#powershell-remote-management-from-linux'>link</a>&mdash;<a href='powershell-remote-management-from-linux.html'>standalone</a>]</small>
+<p>
+  When you are an avid linux fan/user in a windows environment, you try to find
+  ways to avoid having to use a windows computer. As I was exploring different
+  methods of remote administration for windows, I decided to learn about
+  Powershell Remoting. I wanted to try and use the Powershell that is now
+  available for linux, Powershell Core. With earlier versions, I was unable to
+  do much, however, newer versions bring much more useful functionality. In this
+  post, I will talk about how to get set up to remotely administer windows systems
+  from Linux using Powershell Core.
+</p>
+
+<p> The first step is to install the proper version of Powershell. In order for
+  this to work, you need to have a newer version of Powershell installed. As of
+  writing this post, the current version on which this works is 6.2.3. The reason
+  for this is that its a relatively new feature for linux powershell.
+</p>
+
+<h3>Installation</h3>
+<b>CentOS/RHEL</b>
+<pre>
+Add the Microsoft repo
+    curl https://packages.microsoft.com/config/rhel/7/prod.repo | sudo tee /etc/yum.repos.d/microsoft.repo
+
+Install the package
+    sudo yum install powershell
+
+By default we do not have NTLM authentication so install this package
+    yum install -y gssntlmssp
+</pre>
+
+<b>Arch Linux using yay AUR Helper</b>
+<pre>
+Install the package
+    yay -S powershell-bin
+
+By default we do not have NTLM authentication so install this package
+    yay -S gss-ntlmssp
+</pre>
+
+<b>Ubuntu</b>
+<pre>
+Download the deb from Microsoft according to your linux version
+  wget https://packages.microsoft.com/config/ubuntu/<UBUNTU_VERSION>/packages-microsoft-prod.deb
+
+Install the package to register the Microsoft repo GPG keys
+  dpkg -i packages-microsoft-prod.deb
+
+Update your repo database
+  sudo apt update
+
+Install the package
+  sudo apt install powershell
+
+By default we do not have NTLM authentication so install this package
+  sudo apt install gss-ntlmssp
+</pre>
+
+<b>Debian 9</b>
+<pre>
+Install some pre-reqs if you do not have them already
+    sudo apt-get install -y curl gnupg apt-transport-https
+
+Import the Microsoft repo GPG keys
+    curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
+
+Add the Microsoft repo
+    sudo sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-debian-stretch-prod stretch main" > /etc/apt/sources.list.d/microsoft.list'
+
+Update your repo database
+  sudo apt update
+
+Install the package
+  sudo apt install powershell
+
+By default we do not have NTLM authentication so install this package
+  sudo apt install gss-ntlmssp
+</pre>
+
+For any other distro please refer to <a
+href="https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-core-on-linux?view=powershell-6#debian-10">Microsoft's
+Documentation</a>
+
+<h3>Setting up the client with physical access to the system</h3>
+<ol>
+  <li>Check if PS Remoting is enabled</li>
+     <pre>
+     Get-PSSessionConfiguration
+     </pre>
+
+  <li>Enable PS Remoting</li>
+    <pre>
+    Enable-PSRemoting -Force
+    </pre>
+
+  <li>Check trusted hosts</li>
+    <p>
+      In order for you to be able to remotely manage a computer using this method,
+      you must be part of the systems trusted hosts. This serves as a form of access
+      control so that even if a malicious actor gains credentials, they cannot simply
+      remote into the system and start running commands. The next few steps will
+      show you how to manage these trusted hosts.
+    <pre>
+    Get-Item WSMan:\localhost\Client\TrustedHosts
+    </pre>
+
+  <li>Remove all trusted hosts, if any exist, to allow for a clean slate</li>
+    <pre>
+    Clear-Item WSMan:\localhost\Client\TrustedHosts
+    </pre>
+
+  <li>Add yourself as a trusted host</li>
+    <pre>
+    Set-Item WSMan:\localhost\Client\TrustedHosts -Force -Value IP_OR_HOSTNAME_HERE
+    winrm s winrm/config/client '@{TrustedHosts="IP_OR_HOSTNAME_HERE"}'
+   </pre>
+   <p>
+     Alternatively you can allow all hosts to PSRemote into this system by setting the "Value"
+     flag to the * wildcard instead of defining a specific IP. This is <em>NOT</em>
+     recommended for security reasons.
+   </p>
+  <li>Restart the remote management service and make it start at boot</li>
+    <pre>
+    Restart-Service -Force WinRM
+    Set-Service WinRM -StartMode Automatic
+    </pre>
+</ol>
+
+<h3>Setting up the client using PSExec (Windows)</h3>
+<p>
+Using psexec, it is possible to remotely execute commands on a system that has the
+$admin SMB share exposed and open. This is more common than you might think and can be
+very dangerous. Using psexec, you can run commands as NT/System which is the most
+powerful user account on a windows computer. This account has more power than the
+administrator account on your computer. If you are able to use this method without
+the need for credentials, be aware that a malicious actor will be able to do the same.
+Passing captured/stolen hashes using psexec is a common tactic used
+by attackers to pivot to other systems on your network after initial compromise.
+Unfortunately, I will only cover this from the windows perspective as I have yet to find
+a modern, working Linux equivalent to these tools. There is the winexe project, but that is
+outdated and did not work for me on Windows 10 clients. That being said, there are definitely
+ways to do it from Linux.
+</p>
+
+<p>
+In order to get psexec, you need to download
+<a href="https://download.sysinternals.com/files/PSTools.zip">PsTools</a> from
+Microsoft. You will unzip it and find psexec.exe in the extracted folder. After
+opening a cmd or powershell window and navigating to this folder, you can run the
+commands from the previous section of this blog just as if you had real physical
+access to the system using the format shown below.
+<pre>
+Without credentials
+    psexec.exe \\RemoteComputerGoesHere -s powershell Enable-PSRemoting -Force
+
+With credentials
+    psexec.exe \\RemoteComputerGoesHere -u UserName -s powershell Enable-PSRemoting -Force
+
+</pre>
+
+<h3>Opening a remote powershell session</h3>
+<p>When you are running commands from linux, it is important that you set authentication
+to negotiate in the flags (as can be seen below). Without this flag, authentication between
+your Linux machine and the windows machine cannot occur properly.</p>
+
+<pre>
+Save the credentials in a secure environment variable
+    $creds = Get-Credential -UserName ADMIN_USERNAME_HERE
+
+Start remote shell with environment variable creds
+    Enter-PSSession -ComputerName IP_HERE -Authentication Negotiate -Credential $creds
+
+Start remote shell with username and creds at runtime
+    Enter-PSSession -ComputerName IP_HERE -Authentication Negotiate -Credential USERNAME
+</pre>
+
+
+<h3>Invoking commands on a client</h3>
+<pre>
+Invoke-Command -ComputerName IP_HERE -Authentication Negotiate -Credential $creds `
+-ScriptBlock {COMMAND_HERE}
+</pre>
+
+
+<h3>Invoking a PS1 script on a client</h3>
+<pre>
+Invoke-Command -ComputerName IP_HERE -Authentication Negotiate -Credential $creds `
+-FilePath C:\Path\To\Scripts\script.ps1
+</pre>
+
+
+<h3>Managing several clients</h3>
+You can run either "Enter-PSSession" or "Invoke-Command" with the <b>-AsJob</b> flag
+and it will run in the background. You will be returned a job id which you can
+later use to  retrieve the job's output using
+<pre>Receive-Job -id JOB_ID_HERE</pre>
+If you forgot the job id, you can check it using
+<pre>Get-PSSession</pre>
+If you started a background PSSession you can work with it as follows
+<pre>
+Accessing session
+    Enter-PSSession -id SESSION_ID
+Execute command with session
+    Invoke-Command -Session (Get-PSSession -id SESSION_ID) -ScriptBlock {COMMAND_HERE}
+</pre>
+<p>
+You can also use other methods such as storing a list of clients in a CSV file or pulling them
+straight from your Active Directory server.
+</p>
+<pre>
+Running remote commands on several machines from csv of "ComputerName, IP"
+    foreach($row in $devices.IP) {
+        Invoke-Command -ComputerName $row -Authentication Negotiate `
+        -Credential $creds -ScriptBlock{COMMAND_HERE}
+    }
+
+Running remote commands on several machines at a time using AD and pipe
+    Get-ADComputer -Filter *  -properties name | select @{Name="computername";`
+    Expression={$_."name"}} | Invoke-Command -ScriptBlock {COMMMAND_HERE}
+</pre>
+
+<h3>Killing background sessions</h3>
+If you wanted to kill a background session, you would normally run
+<pre>Get-PSSession -id SESSION_ID | Disconnect-PSSession</pre>
+However, unfortunately Linux powershell core, at least on 6.2.3, does not have
+<b>Disconnect-PSSession </b> available as a command. This means that the only way to end a
+background session is to enter the session and manually type exit. Alternatively you can
+find and kill the PID of the process.
+
+<h3>Where to learn more</h3>
+<p>
+There is a lot of information here, some of which may not make sense to you if you have little
+experience with remote administration over the command line. I highly recommend you start up a
+windows virtual machine or two and practice the techniques discussed in this post.
+Additionally, you can use the resources I used to learn the things I am talking about in
+this post linked below.
+</p>
+<a href="
+https://devblogs.microsoft.com/scripting/an-introduction-to-powershell-remoting-part-one/">Microsoft Powershell Remoting Blog Series</a>
+<br>
+<a
+href="https://blog.quickbreach.io/posts/powershell-remoting-from-linux-to-windows/">Powershell
+from Linux</a>
+<br>
+<footer>by <strong><a href='kevrocks67.github.io'>Kevin Diaz</a></strong></footer>
+</body>
+
+</html>
