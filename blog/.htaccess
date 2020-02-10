@@ -2,3 +2,4 @@ AddDescription "QEMU Host Only Networking" "qemu-host-only-networking.html" #Fri
 AddDescription "QEMU Port Forwarding Using Iptables" "qemu-port-forwarding-using-iptables.html" #Wed, 08 May 2019 23:47:10 -0400
 AddDescription "Lenovo W520 PCIe VFIO Passthrough with Qemu on Arch Linux" "lenovo-w520-pcie-vfio-passthrough-with-qemu-on-arch-linux.html"
 AddDescription "Powershell Remote Management From Linux" "powershell-remote-management-from-linux.html" #Tue, 14 Jan 2020 15:22:02 -0500
+AddDescription "Linux Authentication Using G-Suite Secure LDAP" "linux-authentication-using-gsuite-secure-ldap.html" #Mon, 10 Feb 2020 12:11:05 -0500

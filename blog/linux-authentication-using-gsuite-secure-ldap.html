@@ -1,0 +1,152 @@
+<html>
+<head>
+<title>Linux Authentication Using G-Suite Secure LDAP</title>
+<link rel='stylesheet' type='text/css'
+    href='../css/blog.css'>
+<meta charset='utf-8'/>
+</head>
+<body id='indiv'>
+<h1>Linux Authentication Using G-Suite Secure LDAP</h1>
+<small>[<a href='../blog.html#linux-authentication-using-gsuite-secure-ldap'>link</a>&mdash;<a href='linux-authentication-using-gsuite-secure-ldap.html'>standalone</a>]</small>
+<p>
+  Google's G-Suite has been dominating the field of cloud suite services for a long time in both
+  the enterprise and the education world. It is a strong competitor to options such as Microsoft
+  Office 365. Not only can it offer mail, storage, and other related apps which users expect,
+  but it can also offer lots of features to help administrators. It has a very useful interface
+  for centrally managing all of your chromebook devices which has become a large part of the
+  technology used in the education space. It is already essentially an identification service.
+  Google allows us to use this identification service for devices other than chromebooks and
+  apps through Lightweight Directory Access Protocol (LDAP). In this blog post, I will discuss how
+  I managed to set up SSSD to provide authentication via G Suite secure LDAP. This allows for the
+  use of G Suite instead of having to duplicate all your users into a Microsoft Active
+  Directory server simply for authentication or paying for a service. For the sake of brevity,
+  I will only be showing how I did this in CentOS 7. However, it is really easy to adapt these
+  instructions to the distro of your choice. The only real differences will most likely be related
+  to installing the software and configuring SE Linux (since it is not enabled on all distros).
+</p>
+
+<h3>Installing required packages</h3>
+<pre>
+yum install sssd sssd-tools sssd-utils unzip
+</pre>
+
+<h3>Generating Cert and Key in G Suite</h3>
+<ol>
+  <li>Open your G Suite Console</li>
+  <li>Navigate to Apps>LDAP</li>
+  <li>Click on "Add Client"</li>
+  <li>Give the client a name</li>
+  <li>Either allow access to everyone in the organization or restrict it to certain org units</li>
+  <li>Allow read permissions for both users and groups</li>
+  <li>Click "Add LDAP Client"</li>
+  <li>Download the zip file containing the cert and key</li>
+  <li>Enable the creds by switching the LDAP client to "on" under "Service status"</li>
+  <li>Upload the zip file to the client and unzip it</li>
+  <li>Move the files somewhere such as /var/lib</li>
+</ol>
+
+<h3>Configuring sssd.conf</h3>
+<p>
+In order to set up /etc/sssd/sssd.conf, its easiest to copy the default config that google
+recommends and work off of that. You can find it
+<a href="https://support.google.com/a/answer/9089736?hl=en" target="_blank">here</a> under the SSSD tab.
+</p>
+<p>
+Make sure to replace the domain and location of the cert and key. After doing this, we do have
+to add a few other things so that we can better integrate SSSD as an authentication service
+across the system. Under the "sssd" section, add sudo at the end of the services option so that we can
+allow sudo to work with our domain creds. The next thing you can do is modify some settings for
+offline login. You can create a "pam" section and set numbers for
+"offline_credentials_expiration", "offline_failed_login_attempts", and
+"offline_failed_login_delay". These are the options that I have set in my VM, but there are a
+lot more you can use. Refer to the man page for sssd.conf or the Red Hat documentation linked in
+the testing section
+to see what else you can do. Finally, we have to make sure the system will be usable and that
+the user will not encounter any errors on login. We do this by setting two options to True in the
+"domain/YOUR_DOMAIN.com" section. The first option is "create_homedir" which ensures that the
+user will have a home directory created for them when they log in. The other option is
+"auto_private_groups" which helps with UID and GID errors that may occur since the UID and GID
+are set from G Suite instead of being locally stored in /etc/passwd. Below you will find the file
+I used to test in my VM. I replaced my actual domain with "yourdomain.com".
+</p>
+
+<pre>
+/etc/sssd/sssd.conf
+
+
+[sssd]
+services = nss,pam,sudo
+domains = yourdomain.com
+
+[domain/yourdomain.com]
+ldap_tls_cert = /var/lib/ldapcreds.crt
+ldap_tls_key = /var/lib/ldapcreds.key
+ldap_uri = ldaps://ldap.google.com
+ldap_search_base = dc=yourdomain,dc=com
+id_provider = ldap
+auth_provider = ldap
+ldap_schema = rfc2307bis
+ldap_user_uuid = entryUUID
+ldap_groups_use_matching_rule_in_chain = true
+ldap_initgroups_use_matching_rule_in_chain = true
+create_homedir = True
+auto_private_groups = true
+
+[pam]
+offline_credentials_expiration = 2
+offline_failed_login_attempts = 3
+offline_failed_login_delay = 5
+</pre>
+
+<h3>Configuring nsswitch.conf</h3>
+<pre>authconfig --enablesssd --enablesssdauth --enablemkhomedir --updateall</pre>
+Open /etc/nsswitch.conf and add the line <pre>sudoers:    files sss</pre>
+Everything else should have been configured by the authconfig command.
+
+<h3>Permissions and SE Linux</h3>
+<pre>
+setenforce 0
+chcon -t sssd_t ldapcreds.crt
+chcon -t sssd_t ldapcreds.key
+setenforce 1
+chmod 0600 /etc/sssd/sssd.conf
+</pre>
+If you are having problems getting things to work after attempting it this way, just disable SE Linux
+
+<h3>Enable and start everything</h3>
+<pre>
+sudo systemctl start sssd
+sudo systemctl enable sssd
+</pre>
+
+<h3>Testing</h3>
+<p>
+The easiest way to test if everything is working is to su into your user account on your domain
+and see if you can log in using your password. If this works, you should have a home folder created
+in /home and be able to try a sudo command. By default, it will say you are not allowed to run
+sudo since your account is not in the sudoers file. The easiest way to give access to sudo commands
+is to give a group permissions to do things. Your google groups will work just as if you were giving
+a local group sudo access. However, you can still just give individual users access the same
+way.
+</p>
+
+<p>
+Alternatively, you can use sssctl to do a lookup on a user account in your domain. It is done as
+follows:
+<pre>sssctl user-checks USERNAME</pre>
+This and so many other tools and functionalities can be found in Red Hat's
+<a
+href="https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/system-level_authentication_guide/index"
+target="_blank">System-level Authentication Guide</a>.
+
+If you are having problems make sure to check your /etc/sssd/sssd.conf config file so that it is
+accurate and has the proper permissions of 0600. Additionally, make sure that SE Linux is not
+causing you problems. Any other debugging can be done through reading of man pages (sssd,
+sssd.conf, etc), googling, and looking at
+google's <a href="https://support.google.com/a/topic/9048334?hl=en&ref_topic=7556782"
+target="_blank">Support Center</a> page for Secure LDAP.
+</p>
+<footer>by <strong><a href='https://kevrocks67.github.io'>Kevin Diaz</a></strong></footer>
+</body>
+
+</html>
