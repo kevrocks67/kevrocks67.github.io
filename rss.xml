@@ -12,6 +12,211 @@
 <!-- LB -->
 
 <item>
+<title>Creating An MIT Kerberos 5 Server In CentOS</title>
+<guid>https://kevrocks67.github.io/blog.html#creating-an-mit-kerberos-5-server-in-centos.html</guid>
+<pubDate>Wed, 27 Jan 2021 22:39:20 -0500</pubDate>
+<description><![CDATA[
+<iframe width="560" height="315" src="https://www.youtube.com/embed/my9spgQh6ms" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<p>
+Kerberos is an authentication protocol which is very commonly used throughout the world. It is
+most commonly seen through its implementation in Microsoft Active Directory. However, MIT has an
+implementation of the Kerberos protocol, krb5, which we can use on Linux. It uses symmetric
+encryption combined with a ticket based system in order to securely authenticate users. I will
+not spend much time describing the protocol as there are existing resources such as
+<a href="https://www.youtube.com/watch?v=5N242XcKAsM" target=_blank>this one</a> which explain it and the
+terminology in this article very well.
+</p>
+<p>
+MIT krb5 can be used as a standalone product or can be integrated with a LDAP server, such
+as OpenLDAP, as a backend. In this article, I will only discuss krb5 as a standalone
+authentication product. In this configuration, there will be no identity tied to the Kerberos
+Ticket provided other than the User Principal Name (UPN). If you want a full identiy and
+authentication solution you should integrate krb5 with LDAP.
+</p>
+<p>
+The main components of the krb5 server are the Key Distribution Center (KDC), the kadmin server,
+the database and the keytab file. The KDC is the main server and kadmin is the server that allows
+you to manage principals in the database as well as manage the keytab. There is also an
+additional service that is running as part of the kadmin service which is kpasswd. This allows
+users to reset their password using the kpasswd utility.
+</p>
+
+<h3>Installation and Configuration</h3>
+<ol>
+  <li>Set a proper hostname</li>
+  <pre>
+  hostnamectl set-hostname kerberos.kevco.virt
+  </pre>
+
+  <li>Ensure time is synced using an NTP server</li>
+  <p>
+  By default, CentOS should have chronyd started and enabled, however, you may want to set up
+  an ntpd server. It is very important that the kerberos server and clients have their time
+  synced up. Otherwise, you will have problems authenticating.
+  </p>
+
+  <li>yum install krb5-server krb5-libs krb5-workstation</li>
+
+  <li>Edit <i>/etc/krb5.conf</i>
+  <p>Uncomment and replace all lines with references
+  to the example domain and realm. The standard realm name convention is to use your domain name
+  capitalized.  Below you will find an example config declaring the realm <i>KEVCO.VIRT</i> on a
+  machine with the hostname <i>kerberos.kevco.virt</i>.</li>
+  <pre>
+  [logging]
+   default = FILE:/var/log/krb5libs.log
+   kdc = FILE:/var/log/krb5kdc.log
+   admin_server = FILE:/var/log/kadmind.log
+
+  [libdefaults]
+   default_realm = KEVCO.VIRT
+   dns_lookup_realm = false
+   dns_lookup_kdc = false
+   ticket_lifetime = 24h
+   renew_lifetime = 7d
+   forwardable = true
+   rdns = false
+
+  [realms]
+   KEVCO.VIRT = {
+     kdc = kerberos.kevco.virt
+     admin_server = kerberos.kevco.virt
+   }
+
+  [domain_realm]
+   .kevco.virt = KEVCO.VIRT
+   kevco.virt = KEVCO.VIRT
+ </pre>
+ Here I set the log file locations in the logging section. In the libdefaults section, the default
+ realm is set to KEVCO.VIRT as you can define multiple realms for a KDC. I disabled DNS lookup
+ as there is no DNS server in this scenario. I also disabled rdns since reverse DNS is not set
+ up in this scenario (because there is no DNS server). Finally, I declared the realm KEVCO.VIRT
+ and provided the hostnames for the kdc and kadmin server which happens to be this same machine.
+ The final section simply defines translations from domain name to realm name. For any
+ additional information check <i>man krb5.conf</i> or <a
+ href="http://web.mit.edu/kerberos/krb5-latest/doc/admin/conf_files/krb5_conf.html#libdefaults"
+ target=_blank>MIT documentation</a>.</p>
+ </li>
+
+ <li>Edit <i>/var/kerberos/krb5kdc/kdc.conf</i></li>
+ <p>
+   This is the file that holds the main configuration for your KDC. Replace the example realm
+   with your own and set any other options you would like. Below is an example of a config you can
+   use. For available options reference the
+   <a href="http://web.mit.edu/kerberos/krb5-latest/doc/admin/conf_files/kdc_conf.html"
+   target=_blank>documentation</a>. In this example, I leave the default encryption types
+   enabled, however, you may want to disable the likes of des, des3, and RC4 in favor of AES if
+   possible.
+ </p>
+ <pre>
+ [kdcdefaults]
+ kdc_ports = 88
+ kdc_tcp_ports = 88
+
+ [realms]
+  KEVCO.VIRT = {
+   master_key_type = aes256-cts
+   acl_file = /var/kerberos/krb5kdc/kadm5.acl
+   dict_file = /usr/share/dict/words
+   admin_keytab = /var/kerberos/krb5kdc/kadm5.keytab
+   supported_enctypes = aes256-cts:normal aes128-cts:normal des3-hmac-sha1:normal arcfour-hmac:normal des-hmac-sha1:normal des-cbc-md5:normal des-cbc-crc:normal
+  }
+ </pre>
+
+ <li>Edit <i>/var/kerberos/krb5kdc/kdm5.acl</i>
+   <p>
+    This is the ACL file that determines who will be able to do which actions on the kadmin
+    server. You should add permissions for the admin/admin service principal as can be seen
+    below. Without this, you will not be able to do anything on the server remotely, including
+    pulling down the keys into the keytab of a client. In order to restrict permissions down to
+    certain actions see the <a
+    href="http://web.mit.edu/kerberos/krb5-latest/doc/admin/conf_files/kadm5_acl.html"
+    target=_blank>documentation</a>.
+   </p>
+ <pre>
+ admin/admin@KEVCO.VIRT   *
+ </pre>
+
+ <li>Create the kerberos database</li>
+ <pre>
+ kdb5_util create -s
+ </pre>
+
+ <li>Create the admin service principal</li>
+ <pre>
+ kadmin.local -q "addprinc admin/admin"
+ </pre>
+
+ <li>Start and enable the kdc and kadmin</li>
+ <pre>
+ systemctl start krb5kdc kadmin
+ systemctl enable krb5kdc kadmin
+ </pre>
+
+ <li>Create a service principal for this computer with a random key and add the keys to the local
+ keytab</li>
+ <p>All systems that you want to use kerberos authentication should have a service principal
+ (SPN). The standard is <i>host/hostname_in_dns</i>. You can add multiple principals as aliases
+ if you have more than one name for your machine.
+ You must have your own keys stored in your local keytab. You will also need to add that clients
+ own generated keys from their SPN to their keytab if you want things to work properly.
+ </p>
+ <pre>
+ kadmin -p admin/admin -q "addprinc -randkey host/kerberos.kevco.virt"
+ kadmin -p admin/admin -q "ktadd host/kerberos.kevco.virt"
+ </pre>
+
+ <li>Create your own principal and give it whatever access you need in the kadm5.acl file</li>
+ <pre>
+ kadmin -p admin/admin -q "addprinc kdiaz"
+ </pre>
+
+ <li>Create a test ticket using kinit</li>
+ <p>You need to get a ticket using kinit for an existing principal (admin in this case) and
+ then you can view it and other stored tickets using klist. Finally, you can destroy this ticket
+ and remove it from the cache using kdestroy.
+ </p>
+ <pre>
+ kinit kdiaz
+ klist
+ kdestroy -A
+ </pre>
+
+ <li>Open the proper ports in the firewall
+   <p>
+     Port 88 needs to be open primarily on 88/udp. However, you also need to open 88/tcp as
+     kerberos will use this if the Tickets get too big. Other ports include 749/tcp for the
+     kadmin server and 464/udp for the kpasswd service.
+   </p>
+ <pre>
+   for port in {88/tcp,88/udp,749/tcp,464/udp};do
+     firewall-cmd --permanent --add-port $port;done
+   firewall-cmd --reload
+ </pre>
+ </li>
+ <li>(Optional) Add DNS SRV records</li>
+ <p>
+ If you have DNS configured in your environment you should add records for your kerberos server.
+ The record names are self explanatory/if you are doing this you likely know what youre
+ doing.
+ <pre>
+ $ORIGIN _tcp.kevco.virt.
+ _kerberos-adm    SRV 0 0 749 kerberos.kevco.virt.
+ _kerberos        SRV 0 0 88  kerberos.kevco.virt.
+
+ $ORIGIN _udp.kevco.virt.
+ _kerberos        SRV 0 0 88  kerberos.kevco.virt.
+ _kerberos-master SRV 0 0 88  kerberos.kevco.virt.
+ _kpasswd         SRV 0 0 464 kerberos.kevco.virt.
+ </pre>
+</ol>
+]]></description>
+</item>
+
+
+
+
+<item>
 <title>Linux Authentication Using G-Suite Secure LDAP</title>
 <guid>kevrocks67.github.ioblog.html#linux-authentication-using-gsuite-secure-ldap.html</guid>
 <pubDate>Mon, 10 Feb 2020 12:11:05 -0500</pubDate>
