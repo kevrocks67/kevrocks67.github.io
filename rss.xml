@@ -12,6 +12,140 @@
 <!-- LB -->
 
 <item>
+<title>Configuring OpenSSH to use Kerberos Authentication</title>
+<guid>https://kevrocks67.github.io/blog.html#configuring-openssh-to-use-kerberos-authentication.html</guid>
+<pubDate>Thu, 04 Feb 2021 19:52:10 -0500</pubDate>
+<description><![CDATA[
+<iframe width="560" height="315" src="https://www.youtube.com/embed/mwb2IjlEjr0" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<p>
+This article is a continuation of the <a
+href="https://kevrocks67.github.io/blog.html#creating-an-mit-kerberos-5-server-in-centos">last
+article</a> about setting up an MIT krb5 server. We will configure OpenSSH to work using tickets
+from this server.
+</p>
+Modern OpenSSH uses GSSAPI to communicate with Kerberos. What this means is that despite the fact that
+there are configuration options that start with the word Kerberos, we should not be using them.
+These options are legacy options that only work over SSHv1 (now deprecated).
+</p>
+
+<ol>
+  <li>Set a proper hostname</li>
+  <pre>
+  hostnamectl set-hostname client.kevco.virt
+  </pre>
+
+  <li>Ensure time is synced using an NTP server</li>
+  <p>
+  By default, CentOS should have chronyd started and enabled, however, you may want to set up
+  an ntpd server. It is <i>very important</i> that the kerberos server and clients have their time
+  synced up. Otherwise, you will have problems authenticating.
+  </p>
+
+  <li>Install the Kerberos packages</li>
+  <pre>
+  yum install krb5-workstation krb5-libs
+  </pre>
+
+  <li>Edit <i>/etc/krb5.conf</i></li>
+  <p>
+  Configure this file in a similar manner to the server. Replace the example domain and
+  realm with your domain and realm. Also make sure that you point to the correct kdc and admin
+  server.
+  </p>
+
+  <li>Add an entry into <i>/etc/hosts</i> (optional if DNS configured)</li>
+  <p>
+  If you do not have DNS configured with the proper SRV and A records, you should add an
+  entry pointing to the hostname of the kerberos server. Make sure that this hostname is the
+  same as the Service Principal Name (SPN) you gave the server. You cannot have an entry in your
+  /etc/hosts that is <i>kerberos</i> instead of <i>kerberos.kevco.virt</i> if you do not have an
+  SPN matching <i>host/kerberos@KEVCO.VIRT</i> in your KDC.
+  </p>
+
+  <li>Create a service principal for this machine and add it to this machines keytab</li>
+  <p>
+  Each machine must have its own service principal and have its key stored in its own keytab.
+  </p>
+  <pre>
+  kadmin -p admin/admin -q "addprinc -randkey host/server.kevco.virt"
+  kadmin -p admin/admin -q "ktadd host/server.kevco.virt"
+  </pre>
+
+  <li>Edit <i>/etc/ssh/sshd_config</i> and insert the following </i>
+  <pre>
+  GSSAPIAuthentication yes
+  GSSAPICleanupCredentials yes
+  GSSAPIStrictAcceptorCheck yes
+  </pre>
+  <p>
+  As stated before GSSAPI is the interface used by SSHv2 in order to authenticate with kerberos
+  so it must be enabled. The second option is very important. GSSAPICleanupCredentials ensures
+  that your credentials are destroyed on logout instead of staying in the cache. The reason this
+  is important is that if an attacker gets into your machine, they can steal the ticket from
+  this machine and <a href="https://attack.mitre.org/techniques/T1558/">Pass The Ticket</a> to
+  another server to which these credentials may provide access to. Finally, we enable the
+  StrictAcceptorCheck which verifies that the SPN matches the hosts hostname. You can disable
+  this if you have multiple aliases. You should probably disable password authentication at this
+  point as well to reduce the attack surface.
+  </p>
+
+  <li>Add approved users to the <i>~/.k5login</i> file or create a user</li>
+  <p>
+  There are two options you can use to allow users to log in to an account on your server
+  using kerberos. The first option is to create a <i>.k5login</i> file in the home folder of the
+  user you want the kerberos user to be allowed to log in as. In this case we will put it in the
+  root users folder as this is an example (Please do not allow root user login to your SSH
+  servers). You will place one User Principal Name (UPN) per line:
+  </p>
+  <pre>
+  kdiaz@KEVCO.VIRT
+  </pre>
+  <p>
+  The second option is to simply create a new user that matches the username of the User
+  Principal Name (UPN) that will be logging in. For example, <i>kdiaz@KEVCO.VIRT</i> will be able to
+  log in to the kdiaz user on the server.
+  </p>
+
+  <li>Configure the client using steps 1-5 without forgetting to add the SPN matching hostname
+  of the ssh server to your <i>/etc/hosts</i> file as well
+
+  <li>Edit the <i>/etc/ssh/ssh_config</i> on the client device</li>
+  <pre>
+  GSSAPIAuthentication yes
+  GSSAPIDelegateCredentials no
+  </pre>
+  <p>
+  Once again we enable GSSAPI authentication so that we can use Kerberos. We also, depending on
+  the environment, will disable GSSAPIDelegateCredentials. For this example, we do not need it.
+  However, if you need the server to to obtain tickets on behalf of you, you can enable it. This
+  may be important/useful in certain scenarios. If you do not need it, keep it off as an
+  infected machine with the ability to request tickets on your behalf can cause you trouble.
+  </p>
+
+  <li>Get a ticket and test</li>
+  <pre>
+  kinit kdiaz
+  ssh root@server.kevco.virt
+  </pre>
+  <p>
+  If all is well, you should now be able to use your ticket to log in to the configured user on
+  your server. It is important that you use the proper hostname that matches the servers SPN to
+  avoid trouble. It is also important that the key version number (kvno) of your SPNs and UPNs match
+  throughout the two machines youre trying to get to communicate. It can be a source of
+  headache. Errors such as this one can be found by running the SSH server in debug mode and
+  attempting to authenticate. If you get an error due to the kvno of your UPN not matching, you
+  can clear your credentials from the cache using kdestroy and reinitialize them with kinit.
+  Additional debugging help can be done by also running the ssh client in verbose mode using the
+  <i>-v</i> flag.
+]]></description>
+</item>
+
+
+
+
+
+
+<item>
 <title>Creating An MIT Kerberos 5 Server In CentOS</title>
 <guid>https://kevrocks67.github.io/blog.html#creating-an-mit-kerberos-5-server-in-centos.html</guid>
 <pubDate>Wed, 27 Jan 2021 22:39:20 -0500</pubDate>
