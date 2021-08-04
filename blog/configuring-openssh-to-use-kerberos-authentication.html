@@ -15,6 +15,7 @@ href="https://kevrocks67.github.io/blog.html#creating-an-mit-kerberos-5-server-i
 article</a> about setting up an MIT krb5 server. We will configure OpenSSH to work using tickets
 from this server.
 </p>
+<p>
 Modern OpenSSH uses GSSAPI to communicate with Kerberos. What this means is that despite the fact that
 there are configuration options that start with the word Kerberos, we should not be using them.
 These options are legacy options that only work over SSHv1 (now deprecated).
@@ -129,6 +130,7 @@ These options are legacy options that only work over SSHv1 (now deprecated).
   can clear your credentials from the cache using kdestroy and reinitialize them with kinit.
   Additional debugging help can be done by also running the ssh client in verbose mode using the
   <i>-v</i> flag.
+  </p>
 <footer>by <strong><a href='https://kevrocks67.github.io/'>Kevin Diaz</a></strong></footer>
 </body>
 
