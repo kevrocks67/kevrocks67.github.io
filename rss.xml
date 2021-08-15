@@ -12,6 +12,83 @@
 <!-- LB -->
 
 <item>
+<title>Accessing data from WD My Book Live HDD</title>
+<guid>https://kevrocks67.github.io/blog.html#accessing-data-from-wd-my-book-live-hdd.html</guid>
+<pubDate>Sat, 14 Aug 2021 20:53:10 -0400</pubDate>
+<description><![CDATA[
+<p>
+  Recently, I was asked to access data from a HDD which was previously inside of a WD My Book
+  Live enclosure. I encountered a problem when attempting to mount the HDD on my Linux machine.
+  The drive appeared as a block device with 4 partitions. The first 2 partitions showed as
+  "linux_raid_member", the third appeared as swap and the fourth which was the biggest
+  partition, presumably holding the data, appeared as ext4. Here is a picture of what I saw with
+  <i>lsblk</i>:
+  <br>
+  <img src="https://kevrocks67.github.io/src/wdmybook-data/lsblk.png">
+<p>
+  When I attempted to mount the 1.8T ext4 partition it would give me a "wrong fs type" error
+  message. The first thing I wondered was whether the filesystem was corrupt and I ran
+  <i>e2fsck</i>.
+  It found some errors, however, I could still not mount the drive.
+<p>
+
+<p>
+  Noticing that I could still not mount the drive, I attempted to get at the data using
+  <i>debugfs</i>.  I was finally able to see the folders inside the filesystem. At this point I
+  understood two things. One, the data still exists and is potentially uncorrupted and two,
+  there was something else funny going on with the filesystem.
+</p>
+
+<p>
+  My next step was to run <i>dmesg</i> to see if there was anything of use in there. What I found
+  was a bunch of errors referencing block size. This was something new to me. I began to do some
+  googling and found that apparently mount has problems mounting filesystems with a blocksize
+  over 4096. I began to investigate the filesystem further using an assortment of tools. Both
+  <i>dumpe2fs</i> and <i>tune2fs</i> told me that I was dealing with a block size of 65536. This
+  was shocking to discover as I had never really seen different block sizes being used,
+  especially not one so large. I also attempted to retrieve the blocksize using <i>blockdev</i>,
+  however, for some reason I got a 4096 blocksize which I knew was incorrect. I am not entirely
+  sure why this was. Below are pictures of the results.
+  <br>
+  <img src="https://kevrocks67.github.io/src/wdmybook-data/dumpe2fs.png">
+  <br>
+  <img src="https://kevrocks67.github.io/src/wdmybook-data/tune2fs.png">
+  <br>
+  <img src="https://kevrocks67.github.io/src/wdmybook-data/blockdev.png">
+</p>
+
+<p>
+  Upon further research I learned that the kernel has had an ongoing problem of dealing with
+  <a target="_blank" href="https://ext4.wiki.kernel.org/index.php/Design_for_Large_Allocation_Blocks">large block sizes</a>.
+  It has to do with page size not being large enough, since its 4096 by default on
+  most machines, along with other misconfigured parameters in the kernel. The solution to be
+  able to retrieve this data is to either modify your kernel parameters to account for this new
+  block size, which is not necessarily realistic all the time, or to use another solution I
+  found, <i>fuseext2</i>.  It will know how to handle the weird block size and will allow you to
+  retrieve your data.
+  <br>
+  <img src="https://kevrocks67.github.io/src/wdmybook-data/fusemount.png">
+  <br>
+  <img src="https://kevrocks67.github.io/src/wdmybook-data/data-mounted.png">
+</p>
+
+<p>
+  The issue of block size is an interesting one. WD most likely chose this bigger block size
+  since this is a drive meant for backups. What this means is potentially big files being
+  transferred. A larger block size can provide better performance for such a situation.
+  Below are some additional resources to read about the large block size problem with Linux:
+  <ul>
+  <li><a target="_blank" href="https://lwn.net/Articles/250335/">Large pages, large blocks, and large problems</a></li>
+  <li><a target="_blank" href="https://www.kernel.org/doc/html/latest/filesystems/ext4/dynamic.html">ext4 High Level Design</a> </li>
+ </ul>
+</p>
+]]></description>
+</item>
+
+
+
+
+<item>
 <title>Configuring OpenSSH to use Kerberos Authentication</title>
 <guid>https://kevrocks67.github.io/blog.html#configuring-openssh-to-use-kerberos-authentication.html</guid>
 <pubDate>Thu, 04 Feb 2021 20:07:30 -0500</pubDate>
