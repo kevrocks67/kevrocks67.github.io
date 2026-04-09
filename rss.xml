@@ -12,6 +12,280 @@
 <!-- LB -->
 
 <item>
+<title>Building a Production-Ready EKS Cluster with Cilium: Lessons from the Field</title>
+<guid>https://kevrocks67.github.io/blog.html#building-a-productionready-eks-cluster-with-cilium-lessons-from-the-field.html</guid>
+<pubDate>Thu, 09 Apr 2026 16:00:27 -0700</pubDate>
+<description><![CDATA[
+<h2 id="introduction">Introduction</h2>
+<p>I was tasked with creating a production-ready AWS Elastic Kubernetes
+Service (EKS) cluster for a new high traffic, web-browser based scraping service. Typically, we would
+follow our traditional pattern of using Hashicorp Nomad just like we do
+for our current production workloads. However, we are creating this
+service in a separate AWS account from traditional production services.
+Nomad, while great, has some limitations with our current deployment strategies:</p>
+<ol type="1">
+<li>Each Nomad client would have to be a self-managed EC2 instance</li>
+<li>Auto-scaling is not as advanced and some features require
+enterprise</li>
+<li>Very limited CNI options limiting performance and observability</li>
+<li>Does not integrate natively with AWS services (as easily)</li>
+<li>Not as well supported by the community</li>
+<li>Not as fast to set up as a managed service</li>
+</ol>
+<p>Understanding the limitations with Nomad, we looked towards
+Kubernetes, which is well established in the industry as the leader for
+orchestration and already is an existing tool we have used in other
+environments. Being that these accounts were created in AWS, using a
+managed service such as EKS was a no-brainer. I wanted to build as
+reliable and fast of a service as I could complete with observability in
+our Loki, Grafana, Tempo, and Mimir (LGTM) stack. The system should also
+be easy to use/manage from a software engineer perspective.</p>
+<p>The choice ended up being going with Cilium for the CNI,
+auto-scaling, and a bunch of Kubernetes controllers/operators. I
+encountered a number of challenges throughout the way which I will
+detail in this article.</p>
+<h2 id="cilium">Cilium</h2>
+<h3 id="why-cilium">Why Cilium?</h3>
+<p>The default CNI for AWS EKS is the AWS VPC CNI. It is a very standard
+Kubernetes CNI with moderate performance. However, I wanted to squeeze
+out as much performance from this cluster as I could. There will be many
+simultaneous requests being made from hundreds of pods and on top of
+that we must have complete observability into what is happening at every
+stage. The logical choice was to go with Cilium, the standard in
+eBPF-based CNI. What this allows us is to have introspection into the
+running jobs network calls as well as implement policy without impacting
+performance. Additionally, eBPF eliminates the layers of networking
+between the client and our service providing lower latency between
+requests providing significant speed ups in our system. Typically, you
+would have to traverse the Linux network stack on the Kubernetes node,
+kube-proxy then routes traffic to the appropriate pod based on iptables
+rules, and then it goes through the Linux network stack inside of the
+container before making it to our service. Leveraging eBPF, we bypass
+all of this overhead. Traffic is routed from the AWS Load Balancer
+directly to the pod’s network interface by Cilium’s eBPF map, cutting
+out the middleman and providing a “fast path” for our data. While L4
+traffic follows this fast path, we also leverage Cilium’s integrated,
+lightweight Envoy proxy for Layer 7 introspection. This allows us to
+apply granular network policies and observe protocol-specific metrics
+(like gRPC or HTTP) via Hubble. At the end of the day, whether you go
+with L7 introspection or not, this gives us high performance visibility
+needed in this high-traffic environment without the traditional sidecar
+overhead in a traditional CNI.</p>
+<h3 id="cilium-challenges-i-faced">Cilium Challenges I Faced</h3>
+<p>Due to not reading documentation closely enough - and frankly being
+the first time I have worked with EKS - I failed to acknowledge that to
+use a custom CNI such as Cilium, you need to disable the default AWS VPC
+upon cluster creation. Furthermore, taints must be placed on nodes and
+tolerations added to core services like CoreDNS. Additionally,
+kube-proxy needs to be disabled for everything to function as
+expected.</p>
+<p>Our deployment was made via Terraform, so in order to disable the
+default AWS VPC CNI, we need to set the
+<code>bootstrap_self_managed_addons</code> variable to false. This comes
+with the caveat that we must now also manually deploy CoreDNS and
+kube-proxy, if you are using it (which we are not). What proceeds is the
+cluster comes up in a bare state with no networking at all so it is
+imperative that the next step is deploying Cilium. Due to the lack of
+networking, the nodes will fail to come up healthy enough to have pods
+which is why we need to have taints on all of our nodes. The Cilium
+operator provides the <code>node.cilium.io/agent-not-ready</code> taint
+for this exact reason. Additionally, this taint is required on all nodes
+for Cilium to be able to manage your workloads. This leads to a
+“chicken-and-egg” problem: we require CoreDNS to complete the Cilium
+installation, but CoreDNS cannot be scheduled because of the active
+taint. To break this deadlock, we added a toleration to the CoreDNS
+deployment:</p>
+<pre class="hcl"><code>tolerations = [
+  {
+    key      = &quot;node.cilium.io/agent-not-ready&quot;
+    operator = &quot;Exists&quot;
+    effect   = &quot;NoSchedule&quot;
+  }
+]</code></pre>
+<p>On my initial deployment of the cluster in our development
+environment I failed to follow these steps and struggled immensely.
+There was weird behavior where over half of requests made in the cluster
+were failing with no clear indication why. It was due to having both
+Cilium and AWS VPC CNI running at the same time. There is an init
+container that configures the node at startup to leverage the CNI. The
+AWS init container would constantly overwrite any configs/rules
+established by Cilium. This was an issue because AWS VPC CNI manages
+ENIs (Elastic Network Interfaces) differently than Cilium. Additionally,
+when both run, they fight over who gets to “own” the secondary IP
+addresses on the node’s interfaces.</p>
+<p>The choices were to either rebuild the cluster or simply clean up the
+AWS CNI. I chose the latter as to reduce the amount of work it would
+take to fix the mistake. I first removed the AWS CNI from the cluster
+using the AWS CLI as well as going through deployments and daemonsets to
+ensure all resources were cleaned up. From there, we still had to clean
+up the changes that the AWS VPC CNI had done on the nodes and ensure the
+Cilium config was the primary. I ran a simple Batch job in the
+kube-system space that had permission to target the node directly and
+cleared out iptables rules, and any other resources my AI agent could
+point me to, left behind by the AWS VPC CNI. From there it was simply
+about doing a rolling restart of the Cilium daemonsets and deployments.
+In hindsight, simply rebuilding the nodes one by one was the simpler
+option, and I did end up doing that anyways, but at the time it got me
+out of the jam pretty quick.</p>
+<p>Further down the line, I also observed issues with the L7
+introspection, and as you could have guessed, it was due to kube-proxy
+being installed and a misconfiguration in Cilium. This clean up has to
+be done in a specific order to not break things. Without kube-proxy or
+some other alternative, services like CoreDNS will now fail to receive
+traffic causing your cluster to brick. You must enable the
+<code>kubeProxyReplacement</code> option in Cilium before destroying
+kube-proxy so that its Envoy proxy is created first. This allows
+ClusterIP and NodePorts to be discovered via Cilium’s eBPF map rather
+than relying on kube-proxy. Once I figured that out, the cluster
+operated very smoothly.</p>
+<h2 id="observability">Observability</h2>
+<p>For observability, we needed to send our data back to our LGTM stack.
+It is a perfectly stable interface that is used across the Yext
+environment so why reinvent the wheel. Traditionally, the Prometheus
+Operator was the standard approach to do this. It requires you to have
+separate agents to collect logs and export Open Telemetry (OTLP)
+metrics. In 2026, Alloy is the Grafana supported path to get
+observability data into your stack. It is an all-in-one agent if you
+will that can handle metrics, logs, and traces. You deploy Alloy either
+as a sidecar to each of your jobs or as a daemonset. Given the number of
+pods I expected in this cluster, I knew that the sidecar pattern would
+not scale well. Given 100 pods I would have 100 Alloy sidecar containers
+as well. Obviously, this increases the blast radius slightly due to the
+jobs depending on what amounts to 1 Alloy container per node, but when
+compared to the alternative its worth the risk. Each container is wasted
+resources that can be allocated to our core workload and a wasted
+secondary IP.</p>
+<p>With Alloy, we were able to get pods metrics scraped that hold a
+specific annotation, <code>prometheus.io.scrape</code>. Our Cilium
+deployment had this annotation added to it which allowed us to get
+Cilium metrics ingested into Mimir as well. Logs and traces are pushed
+via Open Telemetry to the Alloy deployment from the pod. The deployments
+have an environment variable that contains the Kubernetes service
+address of the Alloy deployment.</p>
+<h3 id="alloy-challenges-i-faced">Alloy Challenges I Faced</h3>
+<p>One of the first challenges was converting our existing Alloy
+configuration we use in Nomad to work with Kubernetes. The configuration
+we use in Nomad has all the pre-existing re-labels and tagging in it
+which we need. Due to the complexity of the Alloy river format, it took
+some time to get this right. I had to translate the Nomad resource
+concepts to Kubernetes. Additionally, the Nomad Alloy deployment follows
+the sidecar pattern so I had to account for that.</p>
+<p>Once I figured that out, it was all about refinement. First issue was
+duplicate writes due to Alloy pods on multiple nodes scraping the same
+endpoint. Mimir does not like this duplicate data. I had to restrict the
+Alloy config to only look at metrics coming from its own node. That was
+a quick change.</p>
+<p>Then came another challenge, corruption of the WAL db on abrupt pod
+failure. To resolve this I ended up doing a number of things, but
+ultimately the solution was to add a persistent volume on the node for
+<code>/var/lib/alloy/data</code>.</p>
+<p>Finally, I needed to get more detailed metrics from the nodes
+themselves for observability reasons and so autoscaling can work. This
+meant I had to deploy node exporter and kube state metrics which gave us
+what we needed complete with container level cAdvisor metrics.</p>
+<h3 id="cost-observability">Cost Observability</h3>
+<p>In order to keep track of costs, we leverage CloudZero. This was a
+quick deployment of a helm chart which exports data to our CloudZero
+account where we can combine granular pod level costs with top level AWS
+costs to determine if what we are doing is within budget.</p>
+<h2 id="interacting-and-creating-aws-resources">Interacting and Creating
+AWS resources</h2>
+<p>Since this cluster was going to be primarily leveraged by software
+engineers and the requirements were very dynamic and changing, I needed
+to find a way to not be the blocker for development. I was able to
+leverage AWS provided Kubernetes Controllers/operators to do so. The AWS
+Load Balancer controller was the immediate first choice as that pairs
+nicely with our Cilium deployment. Based on how I configured my Cilium,
+every Cilium Ingress generates an AWS Application Load Balancer (ALB).
+If an engineer chooses to use a standard Network Load Balancer (NLB) or
+leverage the Cilium Ingress, they only need to do so using an annotation
+in their ingress config. These annotations also configure security
+groups which are essential to prevent unauthorized access to the
+cluster. Cilium will create either dedicated load balancers for each
+ingress or share a single load balancer for the entire cluster. We are
+leveraging the dedicated mode for this cluster. The benefit of using the
+Cilium ingress over a standard ingress is getting that native
+integration with Envoy for the L7 introspection we mentioned earlier as
+well as access to Envoy’s load balancing algorithms for service-to-pod
+request distribution.</p>
+<p>Next we needed a more friendly CNAME/alias for these load balancers.
+And guess what? There’s the External DNS controller which will
+automatically generate the necessary Route53 records for this also based
+on an annotation.</p>
+<p>Finally, we have autoscaling. We deployed the Cluster Autoscaler to
+ensure we always have enough nodes to run our jobs and nothing more. We
+also deployed the HorizontalPodAutoscaler (HPA), which uses the LGTM
+metrics to make scaling decisions. This is still a work in progress as
+we determine the best metric and thresholds to scale in and out.</p>
+<p>A small side-exploration was done with the VerticalPodAutoscaler
+(VPA) and Goldilocks in recommendation mode to identify usage patterns
+but ultimately it was determined that we need to wait for real usage to
+be flowing through the cluster to get some more effective data on
+instance sizing and number of instances.</p>
+<h3 id="irsa-iam-roles-for-service-accounts">IRSA (IAM Roles for Service
+Accounts)</h3>
+<p>Additional resources were needed for this service such as S3 buckets,
+Kafka, Memory DB, and MySQL. These resources were created externally via
+Terraform. However, the problem remains of how we connect to these
+services. Of course, there is the classic method of generating service
+accounts or user/password combos. However, there is a better and more
+secure solution - identity-based auth.</p>
+<p>This is where IAM Roles for Service Accounts (IRSA) comes into play.
+With IRSA, we simply create a Kubernetes service account for our
+deployments. An IAM role is created with a policy that allows access to
+the resources. This IAM role is then associated with the Kubernetes
+service account through a trust policy. Like magic, your workload is
+able to access the resources without credentials.</p>
+<h2 id="lessons-learned-and-future-plans">Lessons Learned and Future
+plans</h2>
+<p>It was a long journey to go from no experience with EKS to a
+production cluster. So far it is running relatively flawlessly with
+little to no maintenance needed on the cluster itself. A lot of the
+challenges now lie in improvements and our eventual first Kubernetes
+version upgrade (which I have tested and documented a process for).</p>
+<p>Lessons from this project were, as per usual with most of us, read
+the documentation and read it closely. Like the tortoise taught us,
+there are no shortcuts and shortcuts ultimately make you take longer.
+Observability is important at all levels and it is important to get
+observability early. Being able to look at metrics and logs in a
+centralized location makes a world of a difference in speed. Also how we
+implement observability matters, it is not always free. Finally, just
+because a service is “managed”, does not mean you have a free cake.
+Effort will still be required to learn how to operate the service
+appropriately, especially if you stray from the provided path.</p>
+<h3 id="future-plans">Future Plans</h3>
+<p>The next iteration of work involves optimizing for costs further and
+improving developer experience.</p>
+<ul>
+<li>Vault Secrets Operator - Currently I have been manually populating
+secrets using <code>kubectl</code> for the developers. These secrets are
+already automatically created and populated within our centralized
+Hashicorp Vault. Working closely with our team that owns Vault, we will
+deploy a spoke Vault server in this new account and configure the Vault
+Secrets Operator in the Kubernetes cluster. This will allow developers
+to directly populate their secrets into the Kubernetes secrets engine
+through a simple yaml file.</li>
+<li>KEDA or Karpeneter - Our autoscaling strategy is pretty weak for the
+way we are currently using the cluster. Metrics based scaling needs some
+work and the instance types picked by the cluster autoscaler from our
+node group may be over-provisioning resources. Solutions like KEDA or
+Karpenter may be the solution here allowing us to provision only what we
+need and nothing more. Alternatively, we need to have a deterministic
+way to determine the appropriate instance type for our expected workload
+on the cluster.</li>
+<li>Container Caching - Because the deployments have over 100 pods in a
+scaled up world, and deployments will scale in and out, we should
+introduce container caching through a tool like Spegel. Spegel acts as a
+peer-to-peer network allowing nodes to share container images. This
+effectively results in a local distributed registry cache. This will
+help speed up deployment and reduce network traffic between our Docker
+registry, hosted outside of AWS, and the cluster.</li>
+</ul>
+]]></description>
+</item>
+
+
+<item>
 <title>Accessing data from WD My Book Live HDD</title>
 <guid>https://kevrocks67.github.io/blog.html#accessing-data-from-wd-my-book-live-hdd.html</guid>
 <pubDate>Sat, 14 Aug 2021 20:53:10 -0400</pubDate>
