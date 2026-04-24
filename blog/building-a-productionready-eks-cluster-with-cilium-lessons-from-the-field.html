@@ -17,6 +17,8 @@
 <small>[<a href='../blog.html#building-a-productionready-eks-cluster-with-cilium-lessons-from-the-field'>link</a>&mdash;<a href='building-a-productionready-eks-cluster-with-cilium-lessons-from-the-field.html'>standalone</a>]</small>
 </div>
 <div id='entry-body'>
+</div>
+<div id='entry-body'>
 <h2 id="introduction">Introduction</h2>
 <p>I was tasked with creating a production-ready AWS Elastic Kubernetes Service (EKS)
 cluster for a new high traffic, web-browser based scraping service. Typically, we
@@ -141,7 +143,7 @@ than relying on kube-proxy. Once I figured that out, the cluster
 operated very smoothly.</p>
 <h2 id="observability">Observability</h2>
 <p>For observability, we needed to send our data back to our LGTM stack.
-It is a perfectly stable interface that is used across the Yext
+It is a perfectly stable interface that is used across our
 environment so why reinvent the wheel. Traditionally, the Prometheus
 Operator was the standard approach to do this. It requires you to have
 separate agents to collect logs and export Open Telemetry (OTLP)
@@ -283,7 +285,7 @@ help speed up deployment and reduce network traffic between our Docker
 registry, hosted outside of AWS, and the cluster.</li>
 </ul>
 <footer>by <strong><a href='https://kevrocks67.github.io/'>Kevin Diaz</a></strong>
-<b><small>Thu, 09 Apr 2026</small></b>
+<b><small>Fri, 24 Apr 2026</small></b>
 </footer>
 </div></div>
 </body>

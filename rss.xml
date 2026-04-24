@@ -14,15 +14,17 @@
 <item>
 <title>Building a Production-Ready EKS Cluster with Cilium: Lessons from the Field</title>
 <guid>https://kevrocks67.github.io/blog.html#building-a-productionready-eks-cluster-with-cilium-lessons-from-the-field.html</guid>
-<pubDate>Thu, 09 Apr 2026 16:00:27 -0700</pubDate>
+<pubDate>Thu, 24 Apr 2026 14:00:00 -0700</pubDate>
 <description><![CDATA[
+</div>
+<div id='entry-body'>
 <h2 id="introduction">Introduction</h2>
-<p>I was tasked with creating a production-ready AWS Elastic Kubernetes
-Service (EKS) cluster for a new high traffic, web-browser based scraping service. Typically, we would
-follow our traditional pattern of using Hashicorp Nomad just like we do
-for our current production workloads. However, we are creating this
-service in a separate AWS account from traditional production services.
-Nomad, while great, has some limitations with our current deployment strategies:</p>
+<p>I was tasked with creating a production-ready AWS Elastic Kubernetes Service (EKS)
+cluster for a new high traffic, web-browser based scraping service. Typically, we
+would follow our traditional pattern of using Hashicorp Nomad just like we do
+for our current production workloads. However, we are creating this service in a
+separate AWS account from traditional production services. Nomad, while great, has
+some limitations with our current deployment strategies:</p>
 <ol type="1">
 <li>Each Nomad client would have to be a self-managed EC2 instance</li>
 <li>Auto-scaling is not as advanced and some features require
@@ -140,7 +142,7 @@ than relying on kube-proxy. Once I figured that out, the cluster
 operated very smoothly.</p>
 <h2 id="observability">Observability</h2>
 <p>For observability, we needed to send our data back to our LGTM stack.
-It is a perfectly stable interface that is used across the Yext
+It is a perfectly stable interface that is used across our
 environment so why reinvent the wheel. Traditionally, the Prometheus
 Operator was the standard approach to do this. It requires you to have
 separate agents to collect logs and export Open Telemetry (OTLP)
@@ -156,7 +158,7 @@ compared to the alternative its worth the risk. Each container is wasted
 resources that can be allocated to our core workload and a wasted
 secondary IP.</p>
 <p>With Alloy, we were able to get pods metrics scraped that hold a
-specific annotation, <code>prometheus.io.scrape</code>. Our Cilium
+specific annotation, <code>prometheus.io/scrape</code>. Our Cilium
 deployment had this annotation added to it which allowed us to get
 Cilium metrics ingested into Mimir as well. Logs and traces are pushed
 via Open Telemetry to the Alloy deployment from the pod. The deployments
@@ -257,7 +259,7 @@ appropriately, especially if you stray from the provided path.</p>
 <p>The next iteration of work involves optimizing for costs further and
 improving developer experience.</p>
 <ul>
-<li>Vault Secrets Operator - Currently I have been manually populating
+  <li><b>Vault Secrets Operator</b> - Currently I have been manually populating
 secrets using <code>kubectl</code> for the developers. These secrets are
 already automatically created and populated within our centralized
 Hashicorp Vault. Working closely with our team that owns Vault, we will
@@ -265,7 +267,7 @@ deploy a spoke Vault server in this new account and configure the Vault
 Secrets Operator in the Kubernetes cluster. This will allow developers
 to directly populate their secrets into the Kubernetes secrets engine
 through a simple yaml file.</li>
-<li>KEDA or Karpeneter - Our autoscaling strategy is pretty weak for the
+  <li><b>KEDA or Karpeneter</b> - Our autoscaling strategy is pretty weak for the
 way we are currently using the cluster. Metrics based scaling needs some
 work and the instance types picked by the cluster autoscaler from our
 node group may be over-provisioning resources. Solutions like KEDA or
@@ -273,7 +275,7 @@ Karpenter may be the solution here allowing us to provision only what we
 need and nothing more. Alternatively, we need to have a deterministic
 way to determine the appropriate instance type for our expected workload
 on the cluster.</li>
-<li>Container Caching - Because the deployments have over 100 pods in a
+  <li><b>Container Caching</b> - Because the deployments have over 100 pods in a
 scaled up world, and deployments will scale in and out, we should
 introduce container caching through a tool like Spegel. Spegel acts as a
 peer-to-peer network allowing nodes to share container images. This
@@ -283,6 +285,8 @@ registry, hosted outside of AWS, and the cluster.</li>
 </ul>
 ]]></description>
 </item>
+
+
 
 
 <item>
